@@ -1,0 +1,10 @@
+Changes
+lib/DBIx/Array.pm
+LICENSE
+Makefile.PL
+MANIFEST
+README
+t/001_use.t
+t/002_functions.t
+Todo
+META.yml                                 Module meta-data (added by MakeMaker)
