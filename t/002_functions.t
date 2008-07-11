@@ -8,12 +8,12 @@ BEGIN { use_ok( 'DBIx::Array' ); }
 
 my $dba = DBIx::Array->new ();
 isa_ok ($dba, 'DBIx::Array');
-$dba->connect("dbi:SQLite:dbname=database", "", "");
-$dba->AutoCommit(0);
+my $database=q{database};
+unlink($database);
+$dba->connect("dbi:SQLite:dbname=$database", "", "", {RaiseError=>1, AutoCommit=>0});
 my $table="DBIxArray";
 #printf "Tables: %s\n", join(":", $dba->dbh->tables); $dba->rollback; exit 1;
 
-$dba->dbh->do("DROP TABLE IF EXISTS $table");
 $dba->dbh->do("CREATE TABLE $table (f1,f2,f3)");
 is($dba->update("INSERT INTO $table (f1,f2,f3) VALUES (?,?,?)", 0,1,2), 1, 'insert');
 is($dba->update("INSERT INTO $table (f1,f2,f3) VALUES (?,?,?)", 1,2,3), 1, 'insert');
@@ -170,5 +170,5 @@ is($dba->sqlsort($sql,-1), "$sql ORDER BY 1 DESC NULLS LAST", 'sqlsort');
 #is($array->[2]->[1], 2, 'data');
 #is($array->[2]->[2], 3, 'data');
 
-$dba->dbh->do("DROP TABLE IF EXISTS $table");
-$dba->rollback;
+$dba->commit;
+unlink($database);

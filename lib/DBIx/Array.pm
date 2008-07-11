@@ -4,7 +4,7 @@ use DBI;
 
 BEGIN {
   use vars qw($VERSION);
-  $VERSION     = '0.01';
+  $VERSION     = '0.04';
 }
 
 =head1 NAME
@@ -47,6 +47,23 @@ sub new {
 sub initialize {
   my $self = shift();
   %$self=@_;
+}
+
+=head2 name
+
+Set or returns a user friendly identification string for this database connection
+
+  my $name=$sdb->name;
+  my $name=$sdb->name($string);
+
+=cut
+
+*database=\&name;  #depricated
+
+sub name {
+  my $self=shift;
+  $self->{'name'}=shift if @_;
+  return $self->{'name'};
 }
 
 =head2 connect
