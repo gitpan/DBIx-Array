@@ -4,7 +4,7 @@ use DBI;
 
 BEGIN {
   use vars qw($VERSION);
-  $VERSION     = '0.04';
+  $VERSION     = '0.05';
 }
 
 =head1 NAME
@@ -57,8 +57,6 @@ Set or returns a user friendly identification string for this database connectio
   my $name=$sdb->name($string);
 
 =cut
-
-*database=\&name;  #depricated
 
 sub name {
   my $self=shift;

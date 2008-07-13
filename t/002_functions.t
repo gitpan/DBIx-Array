@@ -8,13 +8,14 @@ BEGIN { use_ok( 'DBIx::Array' ); }
 
 my $dba = DBIx::Array->new ();
 isa_ok ($dba, 'DBIx::Array');
-my $database=q{database};
-unlink($database);
-$dba->connect("dbi:SQLite:dbname=$database", "", "", {RaiseError=>1, AutoCommit=>0});
+$dba->connect("dbi:CSV:f_dir=.", "", "", {RaiseError=>1, AutoCommit=>1});
 my $table="DBIxArray";
-#printf "Tables: %s\n", join(":", $dba->dbh->tables); $dba->rollback; exit 1;
+#open TABLE, $table;
+#print TABLE, "f1,f2,f3\n1,a,A\n2,b,B\n3,c,C\n";
+#close TABLE;
 
-$dba->dbh->do("CREATE TABLE $table (f1,f2,f3)");
+$dba->dbh->do("DROP TABLE IF EXISTS $table");
+$dba->dbh->do("CREATE TABLE $table (f1 INTEGER,f2 CHAR(1),f3 VARCHAR(10))");
 is($dba->update("INSERT INTO $table (f1,f2,f3) VALUES (?,?,?)", 0,1,2), 1, 'insert');
 is($dba->update("INSERT INTO $table (f1,f2,f3) VALUES (?,?,?)", 1,2,3), 1, 'insert');
 is($dba->update("INSERT INTO $table (f1,f2,f3) VALUES (?,?,?)", 2,3,4), 1, 'insert');
@@ -170,5 +171,5 @@ is($dba->sqlsort($sql,-1), "$sql ORDER BY 1 DESC NULLS LAST", 'sqlsort');
 #is($array->[2]->[1], 2, 'data');
 #is($array->[2]->[2], 3, 'data');
 
-$dba->commit;
-unlink($database);
+#$dba->commit;
+$dba->dbh->do("DROP TABLE IF EXISTS $table");

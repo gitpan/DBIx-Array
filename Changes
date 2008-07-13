@@ -1,5 +1,13 @@
 Revision history for Perl module DBIx-Array
 
 0.01 2008-07-03
-
-
+  Original Version
+0.02 2008-07-11
+  Added name method
+0.03 2008-07-11
+  Added *database=\&name; alias
+0.04 2008-07-11
+  Trying to get DBD::SQLite tests to work
+0.05 2008-07-13
+  CPAN tests fail with DBD::SQLite. Changed to DBD::CSV. I use DBD::Oracle and DBD:MySQL every day!
+  Removed *database=\&name; alias
