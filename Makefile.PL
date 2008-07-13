@@ -8,7 +8,8 @@ WriteMakefile(
                      'strict'      => 0,
                      'vars'        => 0,
                      'DBI'         => 0,
-                     'Test::Simple'=> 0.44, #for Test::More
-                     'DBD::SQLite' => 0,
+                     'Test::Simple'=> 0.44,
+                     'Test::More'  => 0,
+                     'DBD::CSV'    => 0,
                     },
 );
