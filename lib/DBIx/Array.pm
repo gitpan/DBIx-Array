@@ -1,10 +1,12 @@
 package DBIx::Array;
 use strict;
 use DBI;
+use XML::Simple;
+use Text::CSV_XS;
 
 BEGIN {
   use vars qw($VERSION);
-  $VERSION     = '0.06';
+  $VERSION     = '0.09';
 }
 
 =head1 NAME
@@ -156,6 +158,8 @@ sub dbh {
   return $self->{'dbh'};
 }
 
+=head1 METHODS (Selection)
+
 =head2 sqlcursor
 
 Returns the SQL cursor so that you can use the cursor elsewhere.
@@ -265,12 +269,13 @@ sub _sqlarrayarray {
   my $self=shift();
   my %data=@_;
   my $sth=$self->sqlcursor($data{'sql'}, @{$data{'param'}}) or die($self->errstr);
+  my $name=$sth->{'NAME'}; #DBD::mysql must store this first
   my $row=[];
   my @rows=();
   while ($row=$sth->fetchrow_arrayref()) {
     push @rows, [@$row];
   }
-  unshift @rows, $sth->{'NAME'} if $data{'name'};
+  unshift @rows, $name if $data{'name'};
   $sth->finish;
   return wantarray ? @rows : \@rows;
 }
@@ -376,6 +381,8 @@ sub sqlarrayarraynamesort {
   return $self->sqlarrayarrayname($self->sqlsort($sql, $sort), @_);
 } 
 
+=head1 METHODS (Update)
+
 =head2 update, delete, exec, execute
 
 Returns the number of rows updated or deleted by the SQL statement.
@@ -398,6 +405,106 @@ sub update {
   my $rows=$sth->rows;
   $sth->finish;
   return $rows;
+}
+
+=head1 METHODS (Export)
+
+=head2 xml_arrayhashname
+
+Returns XML given an arrayhashname data structure
+ 
+  $sdb->execute(q{ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD"T"HH24:MI:SS"Z"'});
+  my @arrayhashname=$sdb->sqlarrayhashname($sql);
+  my $xml=$sdb->xml_arrayhashname(data    => \@arrayhashname,
+                                  comment => "Text String Comment",
+                                  uom     => {col1=>"min", col2=>"ft"});
+
+=cut
+
+sub xml_arrayhashname {
+  my $self=shift;
+  my $opt={@_};
+  my $data=$opt->{'data'} || [];
+  $data=[] unless ref($data) eq "ARRAY";
+  my $uom=$opt->{'uom'} || {};
+  $uom={} unless ref($uom) eq "HASH";
+
+  my $header=shift(@$data);
+  foreach (@$data) {
+    foreach my $key (keys %$_) {
+      if (defined($_->{$key})) {
+        $_->{$key}=[$_->{$key}];  #This is needed for XML::Simple to make pretty XML.
+      } else {
+        delete($_->{$key});     #This is a choice that I made but I'm not sure if it's smart
+      }
+    }
+  }
+  @$header=map {exists($uom->{$_})? {content=>$_, uom=>$uom->{$_}} : $_} @$header;
+
+  my $xs=XML::Simple->new(XMLDecl=>1, RootName=>q{document}, ForceArray=>1);
+  my $head={};
+  $head->{'comment'}=[$opt->{'comment'}] if $opt->{'comment'};
+  $head->{'columns'}=[{column=>$header}];
+  $head->{'counts'}=[{rows=>[scalar(@$data)], columns=>[scalar(@$header)]}];
+  return $xs->XMLout({
+                       head=>$head,
+                       body=>{rows=>[{row=>$data}]},
+                     });
+
+}
+
+=head2 csv_arrayarrayname
+
+Returns CSV given an arrayarrayname data structure
+
+  my $csv=$dba->csv_arrayarrayname($data);
+
+=cut
+
+sub csv_arrayarrayname {
+  my $self=shift;
+  my $data=shift;
+  my $csv=Text::CSV_XS->new;
+  return join "", map {&join_csv($csv, @$_)} @$data;
+
+  sub join_csv {
+    my $csv=shift;
+    my $status=$csv->combine(@_);
+    return $status ? $csv->string."\n" : undef;
+  }
+}
+
+#=head2 xml_cursor
+#
+#Writes XML to file handle given an executed cursor
+#
+#=cut
+#
+#sub xml_cursor {
+#  my $self=shift;
+#}
+
+=head2 csv_cursor
+
+Writes CSV to file handle given an executed cursor
+
+  $dba->csv_cursor($fh, $sth);
+
+=cut
+
+sub csv_cursor {
+  my $self=shift;
+  my $fh=shift;
+  my $sth=shift;
+  my $csv=Text::CSV_XS->new;
+  $csv->print($fh, scalar($sth->{'NAME'}));
+  print $fh "\n";
+  my $row=[];
+  while ($row=$sth->fetchrow_arrayref()) {
+    $csv->print($fh, $row);
+    print $fh "\n";
+  }
+  $sth->finish;
 }
 
 =head1 TODO
@@ -430,3 +537,4 @@ LICENSE file included with this module.
 =cut
 
 1;
+

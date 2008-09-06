@@ -9,5 +9,15 @@ Revision history for Perl module DBIx-Array
 0.04 2008-07-11
   Trying to get DBD::SQLite tests to work
 0.05 2008-07-13
-  CPAN tests fail with DBD::SQLite. Changed to DBD::CSV. I use DBD::Oracle and DBD:MySQL every day!
+  CPAN tests fail with DBD::SQLite.
+  Changed to DBD::CSV. I use DBD::Oracle and DBD:MySQL every day!
   Removed *database=\&name; alias
+0.06 2008-07-13
+  Updated Dependencies
+0.07 2008-07-18
+  Added xml_arrayhashname method
+0.08 2008-07-19
+  Added csv_arrayarrayname method
+  Added csv_cursor method
+0.09 2008-09-06
+  Support for $sth->{'NAME'} in DBD::mysql must be read before $sth is empty

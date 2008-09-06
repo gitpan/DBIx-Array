@@ -11,5 +11,7 @@ WriteMakefile(
                      'Test::Simple'=> 0.44,
                      'Test::More'  => 0,
                      'DBD::CSV'    => 0,
+                     'XML::Simple' => 0,
+                     'Text::CSV_XS'=> 0,
                     },
 );
