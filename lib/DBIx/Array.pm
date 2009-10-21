@@ -1,13 +1,11 @@
 package DBIx::Array;
 use strict;
+use warnings;
 use DBI;
 use XML::Simple;
 use Text::CSV_XS;
 
-BEGIN {
-  use vars qw($VERSION);
-  $VERSION     = '0.09';
-}
+our $VERSION='0.10';
 
 =head1 NAME
 
@@ -383,7 +381,7 @@ sub sqlarrayarraynamesort {
 
 =head1 METHODS (Update)
 
-=head2 update, delete, exec, execute
+=head2 update, delete, exec, execute, insert
 
 Returns the number of rows updated or deleted by the SQL statement.
 
@@ -394,6 +392,7 @@ Remember to commit or use AutoCommit
 
 =cut
 
+*insert=\&update;
 *delete=\&update;
 *exec=\&update;
 *execute=\&update;
@@ -534,7 +533,8 @@ LICENSE file included with this module.
 
 =head1 SEE ALSO
 
+L<DBIx::DWIW>, L<DBIx::Wrapper>, L<DBIx::Simple>
+
 =cut
 
 1;
-

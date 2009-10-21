@@ -6,5 +6,6 @@ MANIFEST
 README
 t/001_use.t
 t/002_functions.t
+t/003_exports.t
 Todo
 META.yml                                 Module meta-data (added by MakeMaker)

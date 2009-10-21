@@ -1,23 +1,26 @@
 Revision history for Perl module DBIx-Array
 
 0.01 2008-07-03
-  Original Version
+  - Original Version
 0.02 2008-07-11
-  Added name method
+  - Added name method
 0.03 2008-07-11
-  Added *database=\&name; alias
+  - Added *database=\&name; alias
 0.04 2008-07-11
-  Trying to get DBD::SQLite tests to work
+  - Trying to get DBD::SQLite tests to work
 0.05 2008-07-13
-  CPAN tests fail with DBD::SQLite.
-  Changed to DBD::CSV. I use DBD::Oracle and DBD:MySQL every day!
-  Removed *database=\&name; alias
+  - CPAN tests fail with DBD::SQLite.
+  - Changed to DBD::CSV. I use DBD::Oracle and DBD:MySQL every day!
+  - Removed *database=\&name; alias
 0.06 2008-07-13
-  Updated Dependencies
+  - Updated Dependencies
 0.07 2008-07-18
-  Added xml_arrayhashname method
+  - Added xml_arrayhashname method
 0.08 2008-07-19
-  Added csv_arrayarrayname method
-  Added csv_cursor method
+  - Added csv_arrayarrayname method
+  - Added csv_cursor method
 0.09 2008-09-06
-  Support for $sth->{'NAME'} in DBD::mysql must be read before $sth is empty
+  - Support for $sth->{'NAME'} in DBD::mysql must be read before $sth is empty
+0.10 2009-10-20
+  - Added insert alias for exec
+  - Added dependacy on SQL::Statement=>1.005 for one stupid tester out there
