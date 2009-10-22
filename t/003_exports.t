@@ -18,7 +18,7 @@ is($dba->update("INSERT INTO $table (Col1,Col2,Col3)
                  VALUES (?,?,?)", 2,"b",q{One, Two, or Three}), 1, 'insert');
 is($dba->update("INSERT INTO $table (Col1,Col2,Col3)
                  VALUES (?,?,?)", 3,"c",q{OK, "Already"}), 1, 'insert');
-my $data=$dba->sqlarrayarrayname("SELECT * FROM $table ORDER BY Col1");
+my $data=$dba->sqlarrayarrayname("SELECT Col1 AS Col1, Col2 AS Col2, Col3 AS Col3 FROM $table ORDER BY Col1");
 my $csv=q{Col1,Col2,Col3
 1,a,"Say ""Yes!"""
 2,b,"One, Two, or Three"
@@ -61,11 +61,11 @@ my $xml=q{<?xml version='1.0' standalone='yes'?>
   </head>
 </document>
 };
-$data=$dba->sqlarrayhashname("SELECT * FROM $table ORDER BY Col1");
+$data=$dba->sqlarrayhashname("SELECT Col1 AS Col1, Col2 AS Col2, Col3 AS Col3 FROM $table ORDER BY Col1");
 is($dba->xml_arrayhashname(data=>$data,
                            uom=>{Col1=>"unit1", Col3=>"unit2"}), $xml, "xml_arrayhashname");
 
-my $sth=$dba->sqlcursor("SELECT * FROM $table ORDER BY Col1");
+my $sth=$dba->sqlcursor("SELECT Col1 AS Col1, Col2 AS Col2, Col3 AS Col3 FROM $table ORDER BY Col1");
 
 isa_ok($sth, "DBI::st");
 use IO::Scalar;

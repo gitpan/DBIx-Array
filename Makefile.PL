@@ -10,9 +10,10 @@ WriteMakefile(
                      'DBI'            => 0,
                      'Test::Simple'   => 0.44,
                      'Test::More'     => 0,
-                     'DBD::CSV'       => 0,
-                     'XML::Simple'    => 0,
+                     'DBD::CSV'       => 0.21, #for "DROP TABLE IF EXISTS"
+                     'XML::Simple'    => 0, #for exports
                      'Text::CSV_XS'   => 0,
                      'SQL::Statement' => 1.005,  #Tests
+                     'IO::Scalar'     => 0, #for exports
                     },
 );
