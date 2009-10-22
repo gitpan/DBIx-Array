@@ -27,3 +27,5 @@ Revision history for Perl module DBIx-Array
   - Added test for export methods
 0.11 2009-10-21
   - DBD::CSV no longer preserves case. 0.22 did 0.25 does not.
+0.12 2009-10-22
+  - Removed test for export methods from distrubution
