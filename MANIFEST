@@ -1,5 +1,6 @@
 Changes
 lib/DBIx/Array.pm
+lib/DBIx/Array/Export.pm
 LICENSE
 Makefile.PL
 MANIFEST
@@ -7,4 +8,8 @@ README
 t/001_use.t
 t/002_functions.t
 Todo
+scripts/DBIx-Array-tablename.pl
+scripts/DBIx-Array-bind_param.pl
+scripts/DBIx-Array-export-xls.pl
+scripts/DBIx-Array-export-xls.pl.xls
 META.yml                                 Module meta-data (added by MakeMaker)

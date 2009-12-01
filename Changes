@@ -29,3 +29,11 @@ Revision history for Perl module DBIx-Array
   - DBD::CSV no longer preserves case. 0.22 did 0.25 does not.
 0.12 2009-10-22
   - Removed test for export methods from distrubution
+0.13 2009-11-30
+  - Added hash ref and array ref capablity to the sqlcursor method 100% backwards compatibilty
+0.14 2009-12-01
+  - Moved exports to separate package and have dependant modules dynamically loaded (Not backward compatible user who use the exports will have to use DBIx::Array::Export; now.)
+  - Documentation
+  - Updated Tests
+  - Added xls_arrayarrayname export
+  - Move export compile time requirements to run time requirements

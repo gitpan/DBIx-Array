@@ -1,20 +1,16 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         DBIx-Array
-version:      0.13
+version:      0.14
 version_from: lib/DBIx/Array.pm
 installdirs:  site
 requires:
     DBD::CSV:                      0.21
     DBI:                           0
-    IO::Scalar:                    0
     SQL::Statement:                1.005
     strict:                        0
     Test::More:                    0
-    Test::Simple:                  0.44
-    Text::CSV_XS:                  0
     warnings:                      0
-    XML::Simple:                   0
 
 distribution_type: module
 generated_by: ExtUtils::MakeMaker version 6.30

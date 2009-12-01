@@ -150,12 +150,12 @@ is($array[3]->{'f2'}, 3, 'data');
 is($array[3]->{'f3'}, 4, 'data');
 
 my $sql="SELECT f1,f2,f3 FROM $table";
-is($dba->sqlsort($sql,1), "$sql ORDER BY 1 ASC NULLS LAST", 'sqlsort');
-is($dba->sqlsort($sql,-1), "$sql ORDER BY 1 DESC NULLS LAST", 'sqlsort');
+is($dba->sqlsort($sql,1), "$sql ORDER BY 1 ASC", 'sqlsort');
+is($dba->sqlsort($sql,-1), "$sql ORDER BY 1 DESC", 'sqlsort');
 
-#SQLLite does not support "NULLS LAST"
-#my $sql="SELECT f1,f2,f3 FROM $table WHERE f2 >= 2";
-#my $array=$dba->sqlarrayarraynamesort($sql, -2);
+#This works great in DBD::Oracle but cant get DBD::CSV to play with others
+#$sql="SELECT f1,f2,f3 FROM $table WHERE f2 >= 2";
+#$array=$dba->sqlarrayarraynamesort($sql, -2);
 #isa_ok($array, "ARRAY", 'sqlarrayarray scalar context');
 #isa_ok($array->[0], "ARRAY", 'sqlarrayarrayname row 1');
 #isa_ok($array->[1], "ARRAY", 'sqlarrayarrayname row 2');

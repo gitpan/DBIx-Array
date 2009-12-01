@@ -2,22 +2,37 @@ package DBIx::Array;
 use strict;
 use warnings;
 use DBI;
-use XML::Simple;
-use Text::CSV_XS;
 
-our $VERSION='0.13';
+our $VERSION='0.14';
 
 =head1 NAME
 
-DBIx::Array - This modules is a wrapper around DBI with array interfaces
+DBIx::Array - This module is a wrapper around DBI with array interfaces
 
 =head1 SYNOPSIS
 
   use DBIx::Array;
+  my $dba=DBIx::Array->new;
   $dba->connect($connection, $user, $pass, \%opt); #passed to DBI
   my @array=$dba->sqlarray($sql, @params);
 
 =head1 DESCRIPTION
+
+This module is for people who understand SQL and who understand fairly complex Perl data structures.  If you undstand how to modify your SQL to meet your data requirements then this module is for you.  In the example below, only one line of code is needed to generate an entire HTML table. 
+
+  print &tablename($sdb->sqlarrayarrayname($sql, 15));
+  
+  sub tablename {
+    use CGI; my $html=CGI->new(""); #you would pass this reference
+    return $html->table($html->Tr([map {$html->td($_)} @_]));
+  }
+  sub sql { #Oracle SQL
+    return q{SELECT LEVEL AS "Number",
+                    TRIM(TO_CHAR(LEVEL, 'rn')) as "Roman Numeral"
+               FROM DUAL CONNECT BY LEVEL <= ? ORDER BY LEVEL};
+  }
+
+This module is used to connect to Oracle 10g (L<DBD::Oracle>), MySql 4 and 5 (L<DBD::mysql>) and Microsoft SQL Server (L<DBD::Sybase>) databases in a 24x7 production environment.
 
 =head1 USAGE
 
@@ -25,7 +40,10 @@ DBIx::Array - This modules is a wrapper around DBI with array interfaces
 
 =head2 new
 
-  my $dba = DBIx::Array->new();
+  my $dba=DBIx::Array->new();
+  $dba->connect(...); #connect to database, sets and returns dbh
+
+  my $dba=DBIx::Array->new(dbh=>$dbh); #aready have a handle
 
 =cut
 
@@ -49,6 +67,8 @@ sub initialize {
   %$self=@_;
 }
 
+=head1 METHODS (Properties)
+
 =head2 name
 
 Set or returns a user friendly identification string for this database connection
@@ -64,11 +84,23 @@ sub name {
   return $self->{'name'};
 }
 
+=head2 METHODS (DBI Wrappers)
+
 =head2 connect
 
 Connects to the database and returns the database handle.
 
   $dba->connect($connection, $user, $pass, \%opt);
+
+Pass through to DBI->connect;
+
+Examples: 
+
+  $dba->connect("DBI:mysql:database=mydb;host=myhost", "user", "pass", {AutoCommit=>1, RaiseError=>1});
+
+  $dba->connect("DBI:Sybase:server=myhost;datasbase=mydb", "user", "pass", {AutoCommit=>1, RaiseError=>1}); #Microsoft SQL Server API is same as Sybase API
+
+  $dba->connect("DBI:Oracle:TNSNAME", "user", "pass", {AutoCommit=>1, RaiseError=>1});
 
 =cut
 
@@ -84,6 +116,8 @@ Calls $dbh->disconnect
 
   $dba->disconnect;
 
+Pass through to dbh->disconnect
+
 =cut
 
 sub disconnect {
@@ -92,6 +126,8 @@ sub disconnect {
 }
 
 =head2 commit
+
+Pass through to dbh->commit
 
 =cut
 
@@ -102,6 +138,8 @@ sub commit {
 
 =head2 rollback
 
+Pass through to dbh->rollback
+
 =cut
 
 sub rollback {
@@ -110,6 +148,8 @@ sub rollback {
 }
 
 =head2 AutoCommit
+
+Pass through to  dbh->{'AutoCommit'} or dbh->{'AutoCommit'}=shift;
 
 =cut
 
@@ -122,6 +162,8 @@ sub AutoCommit {
 }
 
 =head2 RaiseError
+
+Pass through to  dbh->{'RaiseError'} or dbh->{'RaiseError'}=shift;
 
 =cut
 
@@ -146,7 +188,7 @@ sub errstr {$DBI::errstr};
 Sets or returns the database handle object.
 
   $dba->dbh;
-  $dba->dbh($dbh);  #if you don't use DBI.
+  $dba->dbh($dbh);  #if you don't use DBI
 
 =cut
 
@@ -169,15 +211,15 @@ Returns the prepared and executed SQL cursor so that you can use the cursor else
 Note: In true Perl fashion extra hash binds are ignored.
 
   my @foo=$dbx->sqlarray("select :foo, :bar from dual",
-                         {foo=>"a", bar=>1, baz=>"buz"});
+                         {foo=>"a", bar=>1, baz=>"buz"}); #returns ("a", 1)
 
-  my $one=$dbx->sqlscalar("select ? from dual", ["one"]);
+  my $one=$dbx->sqlscalar("select ? from dual", ["one"]); #returns "one"
 
-  my $two=$dbx->sqlscalar("select ? from dual", "two");
+  my $two=$dbx->sqlscalar("select ? from dual", "two");   #returns "two"
 
   my $inout=3;
   $dbx->execute("BEGIN :bar := :bar * 2; END;", {out=>\$out});
-  print "$inout\n";
+  print "$inout\n";  #$inout is 6
 
 =cut
 
@@ -209,7 +251,9 @@ Returns the SQL query as a scalar.
 
 This works great for selecting one value.
 
-  $scalar=$dba->sqlscalar($sql, @parameters);
+  $scalar=$dba->sqlscalar($sql,  @parameters); #returns $
+  $scalar=$dba->sqlscalar($sql, \@parameters); #returns $
+  $scalar=$dba->sqlscalar($sql, \%parameters); #returns $
 
 =cut
 
@@ -225,8 +269,12 @@ Returns the SQL query as an array or array reference.
 
 This works great for selecting one column from a table or selecting one row from a table.
 
-  $array=$dba->sqlarray($sql, @parameters);
-  @array=$dba->sqlarray($sql, @parameters);
+  $array=$dba->sqlarray($sql,  @parameters); #returns [$,$,$,...]
+  @array=$dba->sqlarray($sql,  @parameters); #returns ($,$,$,...)
+  $array=$dba->sqlarray($sql, \@parameters); #returns [$,$,$,...]
+  @array=$dba->sqlarray($sql, \@parameters); #returns ($,$,$,...)
+  $array=$dba->sqlarray($sql, \%parameters); #returns [$,$,$,...]
+  @array=$dba->sqlarray($sql, \%parameters); #returns ($,$,$,...)
 
 =cut
 
@@ -241,10 +289,15 @@ sub sqlarray {
 
 Returns the first two columns of the SQL query as a hash or hash reference {Key=>Value, Key=>Value, ...}
 
-  $hash=$dba->sqlhash($sql, @parameters);
-  %hash=$dba->sqlhash($sql, @parameters);
-  @hash=$dba->sqlhash($sql, @parameters); #this is ordered
+  $hash=$dba->sqlhash($sql,  @parameters); #returns {$=>$, $=>$, ...}
+  %hash=$dba->sqlhash($sql,  @parameters); #returns ($=>$, $=>$, ...)
+  @hash=$dba->sqlhash($sql,  @parameters); #this is ordered
   @keys=grep {!($n++ % 2)} @hash;         #ordered keys
+
+  $hash=$dba->sqlhash($sql, \@parameters); #returns {$=>$, $=>$, ...}
+  %hash=$dba->sqlhash($sql, \@parameters); #returns ($=>$, $=>$, ...)
+  $hash=$dba->sqlhash($sql, \%parameters); #returns {$=>$, $=>$, ...}
+  %hash=$dba->sqlhash($sql, \%parameters); #returns ($=>$, $=>$, ...)
 
 =cut
 
@@ -259,8 +312,12 @@ sub sqlhash {
 
 Returns the SQL data as an array or array ref of array references ([],[],...) or [[],[],...]
 
-  $array=$dba->sqlarrayarray($sql, @parameters);
-  @array=$dba->sqlarrayarray($sql, @parameters);
+  $array=$dba->sqlarrayarray($sql,  @parameters); #returns [[$,$,...],[],[],...]
+  @array=$dba->sqlarrayarray($sql,  @parameters); #returns ([$,$,...],[],[],...)
+  $array=$dba->sqlarrayarray($sql, \@parameters); #returns [[$,$,...],[],[],...]
+  @array=$dba->sqlarrayarray($sql, \@parameters); #returns ([$,$,...],[],[],...)
+  $array=$dba->sqlarrayarray($sql, \%parameters); #returns [[$,$,...],[],[],...]
+  @array=$dba->sqlarrayarray($sql, \%parameters); #returns ([$,$,...],[],[],...)
 
 =cut
 
@@ -274,8 +331,12 @@ sub sqlarrayarray {
 
 Returns the SQL data as an array or array ref of array references ([],[],...) or [[],[],...] where the first rows is the column names
 
-  $array=$dba->sqlarrayarrayname($sql, @parameters);
-  @array=$dba->sqlarrayarrayname($sql, @parameters);
+  $array=$dba->sqlarrayarrayname($sql,  @parameters); #returns [[$,$,...],[]...]
+  @array=$dba->sqlarrayarrayname($sql,  @parameters); #returns ([$,$,...],[]...)
+  $array=$dba->sqlarrayarrayname($sql, \@parameters); #returns [[$,$,...],[]...]
+  @array=$dba->sqlarrayarrayname($sql, \@parameters); #returns ([$,$,...],[]...)
+  $array=$dba->sqlarrayarrayname($sql, \%parameters); #returns [[$,$,...],[]...]
+  @array=$dba->sqlarrayarrayname($sql, \%parameters); #returns ([$,$,...],[]...)
 
 =cut
 
@@ -287,10 +348,20 @@ sub sqlarrayarrayname {
 
 =head2 _sqlarrayarray
 
-  $array=$dba->_sqlarrayarray(sql=>$sql, param=>\@parameters, name=>1);
-  @array=$dba->_sqlarrayarray(sql=>$sql, param=>\@parameters, name=>1);
-  $array=$dba->_sqlarrayarray(sql=>$sql, param=>\@parameters, name=>0);
-  @array=$dba->_sqlarrayarray(sql=>$sql, param=>\@parameters, name=>0);
+  $array=$dba->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>1);
+  @array=$dba->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>1);
+  $array=$dba->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>0);
+  @array=$dba->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>0);
+
+  $array=$dba->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>1);
+  @array=$dba->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>1);
+  $array=$dba->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>0);
+  @array=$dba->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>0);
+
+  $array=$dba->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>1);
+  @array=$dba->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>1);
+  $array=$dba->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>0);
+  @array=$dba->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>0);
 
 =cut
 
@@ -313,8 +384,12 @@ sub _sqlarrayarray {
 
 Returns the SQL data as an array or array ref of hash references ({},{},...) or [{},{},...]
 
-  $array=$dba->sqlarrayhash($sql, @parameters);
-  @array=$dba->sqlarrayhash($sql, @parameters);
+  $array=$dba->sqlarrayhash($sql,  @parameters); #returns [{},{},{},...]
+  @array=$dba->sqlarrayhash($sql,  @parameters); #returns ({},{},{},...)
+  $array=$dba->sqlarrayhash($sql, \@parameters); #returns [{},{},{},...]
+  @array=$dba->sqlarrayhash($sql, \@parameters); #returns ({},{},{},...)
+  $array=$dba->sqlarrayhash($sql, \%parameters); #returns [{},{},{},...]
+  @array=$dba->sqlarrayhash($sql, \%parameters); #returns ({},{},{},...)
 
 =cut
 
@@ -328,8 +403,12 @@ sub sqlarrayhash {
 
 Returns the SQL of data as an array or array ref of hash references ([],{},{},...) or [[],{},{},...] where the first rows is an array reference of the column names
 
-  $array=$dba->sqlarrayhashname($sql, @parameters);
-  @array=$dba->sqlarrayhashname($sql, @parameters);
+  $array=$dba->sqlarrayhashname($sql,  @parameters); #returns [[],{},{},...]
+  @array=$dba->sqlarrayhashname($sql,  @parameters); #returns ([],{},{},...)
+  $array=$dba->sqlarrayhashname($sql, \@parameters); #returns [[],{},{},...]
+  @array=$dba->sqlarrayhashname($sql, \@parameters); #returns ([],{},{},...)
+  $array=$dba->sqlarrayhashname($sql, \%parameters); #returns [[],{},{},...]
+  @array=$dba->sqlarrayhashname($sql, \%parameters); #returns ([],{},{},...)
 
 =cut
 
@@ -375,8 +454,6 @@ Returns
 
   SELECT 1,'Z' FROM DUAL UNION SELECT 2,'A' FROM DUAL ORDER BY 2 DESC
 
-See also the STOP::HTML->sqlarrayarraynamesort function
-
 =cut 
 
 sub sqlsort {
@@ -386,7 +463,7 @@ sub sqlsort {
   if (defined($sort) and $sort=int($sort)) {
     my $column=abs($sort);
     my $direction = $sort < 0 ? "DESC" : "ASC";
-    return join " ", $sql, sprintf("ORDER BY %u %s NULLS LAST", $column, $direction);  
+    return join " ", $sql, sprintf("ORDER BY %u %s", $column, $direction);  
   } else {
     return $sql;
   }
@@ -397,7 +474,9 @@ sub sqlsort {
 Returns a sqlarrayarrayname for $sql sorted on column $n where n is an integer asending for positive, desending for negative, 
 and 0 for no sort.
 
-  my $data=$dba->sqlarrayarraynamesort($sql, $n, @parameters);
+  my $data=$dba->sqlarrayarraynamesort($sql, $n,  @parameters);
+  my $data=$dba->sqlarrayarraynamesort($sql, $n, \@parameters);
+  my $data=$dba->sqlarrayarraynamesort($sql, $n, \%parameters);
 
 Note: $sql must not have an "ORDER BY" clause in order for this function to work corectly.
 
@@ -412,20 +491,26 @@ sub sqlarrayarraynamesort {
 
 =head1 METHODS (Update)
 
-=head2 update, delete, exec, execute, insert
+=head2 update, delete, execute, insert
 
 Returns the number of rows updated or deleted by the SQL statement.
 
-  $rows=$dba->update($sql, @parameters);
-  $rows=$dba->delete($sql, @parameters);
+  $rows=$dba->update( $sql,  @parameters);
+  $rows=$dba->delete( $sql,  @parameters);
+  $rows=$dba->execute($sql, \@parameters);
+  $rows=$dba->execute($sql, \%parameters);
 
 Remember to commit or use AutoCommit
+
+Note: It appears that some drivers do not support the count of rows.  For example, DBD::Oracle does not support row counts on delete instead the value apears to be a success code.
+
+Note: Currently update, insert, delete, and execute all point to the same method.  This may change in the future if we need to change the behavior of one method.  So, please use the correct method name for your function.
 
 =cut
 
 *insert=\&update;
 *delete=\&update;
-*exec=\&update;
+*exec=\&update;   #deprecated
 *execute=\&update;
 
 sub update {
@@ -435,106 +520,6 @@ sub update {
   my $rows=$sth->rows;
   $sth->finish;
   return $rows;
-}
-
-=head1 METHODS (Export)
-
-=head2 xml_arrayhashname
-
-Returns XML given an arrayhashname data structure
- 
-  $sdb->execute(q{ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD"T"HH24:MI:SS"Z"'});
-  my @arrayhashname=$sdb->sqlarrayhashname($sql);
-  my $xml=$sdb->xml_arrayhashname(data    => \@arrayhashname,
-                                  comment => "Text String Comment",
-                                  uom     => {col1=>"min", col2=>"ft"});
-
-=cut
-
-sub xml_arrayhashname {
-  my $self=shift;
-  my $opt={@_};
-  my $data=$opt->{'data'} || [];
-  $data=[] unless ref($data) eq "ARRAY";
-  my $uom=$opt->{'uom'} || {};
-  $uom={} unless ref($uom) eq "HASH";
-
-  my $header=shift(@$data);
-  foreach (@$data) {
-    foreach my $key (keys %$_) {
-      if (defined($_->{$key})) {
-        $_->{$key}=[$_->{$key}];  #This is needed for XML::Simple to make pretty XML.
-      } else {
-        delete($_->{$key});     #This is a choice that I made but I'm not sure if it's smart
-      }
-    }
-  }
-  @$header=map {exists($uom->{$_})? {content=>$_, uom=>$uom->{$_}} : $_} @$header;
-
-  my $xs=XML::Simple->new(XMLDecl=>1, RootName=>q{document}, ForceArray=>1);
-  my $head={};
-  $head->{'comment'}=[$opt->{'comment'}] if $opt->{'comment'};
-  $head->{'columns'}=[{column=>$header}];
-  $head->{'counts'}=[{rows=>[scalar(@$data)], columns=>[scalar(@$header)]}];
-  return $xs->XMLout({
-                       head=>$head,
-                       body=>{rows=>[{row=>$data}]},
-                     });
-
-}
-
-=head2 csv_arrayarrayname
-
-Returns CSV given an arrayarrayname data structure
-
-  my $csv=$dba->csv_arrayarrayname($data);
-
-=cut
-
-sub csv_arrayarrayname {
-  my $self=shift;
-  my $data=shift;
-  my $csv=Text::CSV_XS->new;
-  return join "", map {&join_csv($csv, @$_)} @$data;
-
-  sub join_csv {
-    my $csv=shift;
-    my $status=$csv->combine(@_);
-    return $status ? $csv->string."\n" : undef;
-  }
-}
-
-#=head2 xml_cursor
-#
-#Writes XML to file handle given an executed cursor
-#
-#=cut
-#
-#sub xml_cursor {
-#  my $self=shift;
-#}
-
-=head2 csv_cursor
-
-Writes CSV to file handle given an executed cursor
-
-  $dba->csv_cursor($fh, $sth);
-
-=cut
-
-sub csv_cursor {
-  my $self=shift;
-  my $fh=shift;
-  my $sth=shift;
-  my $csv=Text::CSV_XS->new;
-  $csv->print($fh, scalar($sth->{'NAME'}));
-  print $fh "\n";
-  my $row=[];
-  while ($row=$sth->fetchrow_arrayref()) {
-    $csv->print($fh, $row);
-    print $fh "\n";
-  }
-  $sth->finish;
 }
 
 =head1 TODO
@@ -564,7 +549,7 @@ LICENSE file included with this module.
 
 =head1 SEE ALSO
 
-L<DBIx::DWIW>, L<DBIx::Wrapper>, L<DBIx::Simple>
+L<DBI>, L<DBIx::DWIW>, L<DBIx::Wrapper>, L<DBIx::Simple>
 
 =cut
 
