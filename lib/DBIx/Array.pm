@@ -5,7 +5,7 @@ use DBI;
 use XML::Simple;
 use Text::CSV_XS;
 
-our $VERSION='0.12';
+our $VERSION='0.13';
 
 =head1 NAME
 
@@ -160,7 +160,24 @@ sub dbh {
 
 =head2 sqlcursor
 
-Returns the SQL cursor so that you can use the cursor elsewhere.
+Returns the prepared and executed SQL cursor so that you can use the cursor elsewhere.  Every method in this package uses this single method to generate a sqlcursor.
+
+  my $sth=$dbx->sqlcursor($sql, \@param); #binds are ? values are positional
+  my $sth=$dbx->sqlcursor($sql,  @param); #binds are ? values are positional
+  my $sth=$dbx->sqlcursor($sql, \%param); #binds are :key
+
+Note: In true Perl fashion extra hash binds are ignored.
+
+  my @foo=$dbx->sqlarray("select :foo, :bar from dual",
+                         {foo=>"a", bar=>1, baz=>"buz"});
+
+  my $one=$dbx->sqlscalar("select ? from dual", ["one"]);
+
+  my $two=$dbx->sqlscalar("select ? from dual", "two");
+
+  my $inout=3;
+  $dbx->execute("BEGIN :bar := :bar * 2; END;", {out=>\$out});
+  print "$inout\n";
 
 =cut
 
@@ -168,7 +185,21 @@ sub sqlcursor {
   my $self=shift;
   my $sql=shift;
   my $sth=$self->dbh->prepare($sql)    or die($self->errstr);
-  $sth->execute(@_)                    or die($self->errstr);
+  if (ref($_[0]) eq "ARRAY") {
+    $sth->execute(@{$_[0]})            or die($self->errstr);
+  } elsif (ref($_[0]) eq "HASH") {
+    foreach my $key (keys %{$_[0]}) {
+      next unless $sql=~m/:$key\b/;
+      if (ref($_[0]->{$key}) eq "SCALAR") {
+        $sth->bind_param_inout(":$key" => $_[0]->{$key}, 255);
+      } else {
+        $sth->bind_param(":$key" => $_[0]->{$key});
+      }
+    } 
+    $sth->execute                      or die($self->errstr);
+  } else {
+    $sth->execute(@_)                  or die($self->errstr);
+  }
   return $sth;
 }
 
