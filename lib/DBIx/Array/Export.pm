@@ -3,7 +3,7 @@ use base qw{DBIx::Array};
 use strict;
 use warnings;
 
-our $VERSION='0.14';
+our $VERSION='0.15';
 our $PACKAGE=__PACKAGE__;
 
 =head1 NAME
@@ -13,8 +13,8 @@ DBIx::Array::Export - This modules extends DBIx::Array with convenient export fu
 =head1 SYNOPSIS
 
   use DBIx::Array::Export;
-  my $dba=DBIx::Array::Export->new;
-  $dba->connect($connection, $user, $pass, \%opt); #passed to DBI
+  my $dbx=DBIx::Array::Export->new;
+  $dbx->connect($connection, $user, $pass, \%opt); #passed to DBI
 
 =head1 DESCRIPTION
 
@@ -26,9 +26,9 @@ DBIx::Array::Export - This modules extends DBIx::Array with convenient export fu
 
 Returns XML given an arrayhashname data structure
  
-  $sdb->execute(q{ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD"T"HH24:MI:SS"Z"'});
-  my @arrayhashname=$sdb->sqlarrayhashname($sql);
-  my $xml=$sdb->xml_arrayhashname(data    => \@arrayhashname,
+  $dbx->execute(q{ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD"T"HH24:MI:SS"Z"'});
+  my @arrayhashname=$dbx->sqlarrayhashname($sql);
+  my $xml=$dbx->xml_arrayhashname(data    => \@arrayhashname,
                                   comment => "Text String Comment",
                                   uom     => {col1=>"min", col2=>"ft"});
 
@@ -75,7 +75,7 @@ sub xml_arrayhashname {
 
 Returns CSV given an arrayarrayname data structure
 
-  my $csv=$dba->csv_arrayarrayname($data);
+  my $csv=$dbx->csv_arrayarrayname($data);
 
 =cut
 
@@ -102,7 +102,7 @@ sub csv_arrayarrayname {
 
 Writes CSV to file handle given an executed cursor
 
-  $dba->csv_cursor($fh, $sth);
+  $dbx->csv_cursor($fh, $sth);
 
 =cut
 
@@ -131,7 +131,7 @@ sub csv_cursor {
 
 Returns XLS data blob given an arrayarrayname data structure
 
-  my $xls=$dba->xls_arrayarrayname("Tab One"=>$data, "Tab Two"=>$data2, ...);
+  my $xls=$dbx->xls_arrayarrayname("Tab One"=>$data, "Tab Two"=>$data2, ...);
 
 =cut
 
