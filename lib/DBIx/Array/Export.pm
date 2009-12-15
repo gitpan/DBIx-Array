@@ -3,7 +3,7 @@ use base qw{DBIx::Array};
 use strict;
 use warnings;
 
-our $VERSION='0.15';
+our $VERSION='0.17';
 our $PACKAGE=__PACKAGE__;
 
 =head1 NAME
@@ -57,7 +57,7 @@ sub xml_arrayhashname {
   my $module="XML::Simple";
   eval("use $module;");
   if ($@) {
-    die("Error: $PACKAGE->csv_arrayarrayname method requres $module");
+    die("Error: $PACKAGE->xml_arrayhashname method requres $module");
   } else {
     my $xs=XML::Simple->new(XMLDecl=>1, RootName=>q{document}, ForceArray=>1);
     my $head={};
@@ -94,7 +94,7 @@ sub csv_arrayarrayname {
   sub join_csv {
     my $csv=shift;
     my $status=$csv->combine(@_);
-    return $status ? $csv->string."\n" : undef;
+    return $status ? $csv->string."\r\n" : undef; #\r\n per RFC 4180
   }
 }
 
@@ -102,7 +102,10 @@ sub csv_arrayarrayname {
 
 Writes CSV to file handle given an executed cursor
 
+  binmode($fh);
   $dbx->csv_cursor($fh, $sth);
+
+Due to portablilty issues, I choose not to force the passed file handle into binmode.  However, it IS required!  For most file handle objects you can run binmode($fh) or $fh->binmode;
 
 =cut
 
@@ -117,11 +120,11 @@ sub csv_cursor {
   } else {
     my $csv=Text::CSV_XS->new;
     $csv->print($fh, scalar($sth->{'NAME'}));
-    print $fh "\n";
+    print $fh "\r\n";
     my $row=[];
     while ($row=$sth->fetchrow_arrayref()) {
       $csv->print($fh, $row);
-      print $fh "\n";
+      print $fh "\r\n";
     }
     $sth->finish;
   }

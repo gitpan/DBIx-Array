@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use DBI;
 
-our $VERSION='0.15';
+our $VERSION='0.17';
 
 =head1 NAME
 
@@ -20,12 +20,13 @@ DBIx::Array - This module is a wrapper around DBI with array interfaces
 
 This module is for people who understand SQL and who understand fairly complex Perl data structures.  If you undstand how to modify your SQL to meet your data requirements then this module is for you.  In the example below, only one line of code is needed to generate an entire HTML table. 
 
-  print &tablename($dbx->sqlarrayarrayname($sql, 15));
-  
+  print &tablename($dba->sqlarrayarrayname(&sql, 15)), "\n";
+   
   sub tablename {
     use CGI; my $html=CGI->new(""); #you would pass this reference
     return $html->table($html->Tr([map {$html->td($_)} @_]));
   }
+   
   sub sql { #Oracle SQL
     return q{SELECT LEVEL AS "Number",
                     TRIM(TO_CHAR(LEVEL, 'rn')) as "Roman Numeral"

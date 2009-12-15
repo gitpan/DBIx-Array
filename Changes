@@ -37,3 +37,10 @@ Revision history for Perl module DBIx-Array
   - Updated Tests
   - Added xls_arrayarrayname export
   - Move export compile time requirements to run time requirements
+0.15 2009-12-01
+  - Documentation
+0.16 2009-12-08
+  - CSV export is now "\r\n" per RFC 4180
+0.17 2009-12-15
+  - RT 52393 Documentation update
+  - All exports require binmode, added binmode to csv_cursor
