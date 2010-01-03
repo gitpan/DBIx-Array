@@ -43,4 +43,7 @@ Revision history for Perl module DBIx-Array
   - CSV export is now "\r\n" per RFC 4180
 0.17 2009-12-15
   - RT 52393 Documentation update
-  - All exports require binmode, added binmode to csv_cursor
+  - All exports require binmode, added binmode note to csv_cursor
+0.18 
+  - Updated tests so that they "should" be more successful on Win32 platforms
+  - Added runtime test for drivers for "DBD::SQLite", "DBD::CSV", "DBD::XBase"

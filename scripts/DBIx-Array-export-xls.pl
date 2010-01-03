@@ -14,9 +14,9 @@ use strict;
 use warnings;
 use DBIx::Array::Export;
 
-my $connect=shift or die; #written for DBD::Oracle
-my $user=shift or die;
-my $pass=shift or die;
+my $connect=shift or die("$0 connection account password"); #written for DBD::Oracle
+my $user=shift or die("$0 connection account password");
+my $pass=shift or die("$0 connection account password");
 
 my $dba=DBIx::Array::Export->new;
 $dba->connect($connect, $user, $pass, {AutoCommit=>1, RaiseError=>1});

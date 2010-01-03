@@ -1,4 +1,9 @@
 #!/usr/bin/perl
+use strict;
+use warnings;
+use DBIx::Array;
+use Data::Dumper;
+$|=1;
 
 =head1 NAME
 
@@ -10,42 +15,106 @@ Oracle SQL Syntax
 
 =cut
 
-use strict;
-use warnings;
-use DBIx::Array;
-use Data::Dumper;
+my $connect=shift or die("$0 connection account password"); #written for DBD::Oracle
+my $user=shift or die("$0 connection account password");
+my $pass=shift or die("$0 connection account password");
 
-my $connect=shift or die; #written for DBD::Oracle
-my $user=shift or die;
-my $pass=shift or die;
+my $table="";
+$table="FROM DUAL" if $connect=~m/Oracle/i;
 
 my $dba=DBIx::Array->new;
 $dba->connect($connect, $user, $pass, {AutoCommit=>1, RaiseError=>1});
 
-my $sql=q{Select InitCap(:foo) AS "Foo" from dual};
+print "Select\n";
 
-my $data=$dba->sqlarrayarrayname($sql, {bar=>1, foo=>"foO", baz=>1});
-
-print Dumper($data);
-
-$data=$dba->sqlarrayarrayname(qq{SELECT 'A' AS "AAA" FROM DUAL});
+my $data=$dba->sqlarrayarrayname(qq{SELECT 'A' AS AAA $table});
 
 print Dumper($data);
 
-$data=$dba->sqlarrayarrayname(qq{SELECT ? AS "BBB" FROM DUAL}, ["B"]);
+print "Select positional bind\n";
+
+$data=$dba->sqlarrayarrayname(qq{SELECT ? AS BBB $table}, ["B"]);
 
 print Dumper($data);
 
-$data=$dba->sqlarrayarrayname(qq{SELECT ? AS "CCC" FROM DUAL}, "C");
+print "Select positional bind\n";
+
+$data=$dba->sqlarrayarrayname(qq{SELECT ? AS CCC $table}, "C");
 
 print Dumper($data);
 
-my $bar=3;
-print "In: $bar\n";
-$dba->update("BEGIN :bar := :bar * 2; END;", {bar=>\$bar, foo=>1});
-print "Out: $bar\n";
+print "Select named bind\n";
 
-$data=$dba->sqlarrayarrayname(q{select :foo AS "Foo", :bar AS "Bar" from dual},
+my $sql=qq{Select UPPER(:foo) AS Foo $table};
+
+$data=$dba->sqlarrayarrayname($sql, {bar=>1, foo=>"foO", baz=>1});
+
+print Dumper($data);
+
+print "Select named in/out bind\n";
+
+my $inout=3;
+print "In: $inout\n";
+$dba->update("BEGIN :inout := :inout * 2; END;", {inout=>\$inout, foo=>1});
+print "Out: $inout\n";
+
+$data=$dba->sqlarrayarrayname(qq{select :foo AS Foo, :bar AS Bar $table},
                               {foo=>"a", bar=>1, baz=>"buz"});
 
 print Dumper($data);
+
+=head1 OUTPUT
+
+=begin html
+
+<pre>
+
+$VAR1 = [
+          [
+            'Foo'
+          ],
+          [
+            'Foo'
+          ]
+        ];
+$VAR1 = [
+          [
+            'AAA'
+          ],
+          [
+            'A'
+          ]
+        ];
+$VAR1 = [
+          [
+            'BBB'
+          ],
+          [
+            'B'
+          ]
+        ];
+$VAR1 = [
+          [
+            'CCC'
+          ],
+          [
+            'C'
+          ]
+        ];
+In: 3
+Out: 6
+$VAR1 = [
+          [
+            'Foo',
+            'Bar'
+          ],
+          [
+            'a',
+            '1'
+          ]
+        ];
+
+</pre>
+
+=end html
+

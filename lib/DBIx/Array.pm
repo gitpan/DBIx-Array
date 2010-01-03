@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use DBI;
 
-our $VERSION='0.17';
+our $VERSION='0.18';
 
 =head1 NAME
 
@@ -33,7 +33,7 @@ This module is for people who understand SQL and who understand fairly complex P
                FROM DUAL CONNECT BY LEVEL <= ? ORDER BY LEVEL};
   }
 
-This module is used to connect to Oracle 10g (L<DBD::Oracle>), MySql 4 and 5 (L<DBD::mysql>) and Microsoft SQL Server (L<DBD::Sybase>) databases in a 24x7 production environment.
+This module is used to connect to Oracle 10g (L<DBD::Oracle>), MySql 4 and 5 (L<DBD::mysql>) and Microsoft SQL Server (L<DBD::Sybase>) databases in a 24x7 production environment.  The test are written against L<DBD::SQLite>, L<DBD::CSV> and L<DBD::XBase>.
 
 =head1 USAGE
 
@@ -231,7 +231,7 @@ Note: In true Perl fashion extra hash binds are ignored.
   my $two=$dbx->sqlscalar("select ? from dual", "two");   #returns "two"
 
   my $inout=3;
-  $dbx->execute("BEGIN :bar := :bar * 2; END;", {out=>\$out});
+  $dbx->execute("BEGIN :inout := :inout * 2; END;", {inout=>\$inout});
   print "$inout\n";  #$inout is 6
 
 =cut
@@ -542,6 +542,8 @@ I would like to add caching service in the sqlcursor method.
 =head1 BUGS
 
 =head1 SUPPORT
+
+DavisNetworks.com supports all Perl applications big or small.
 
 =head1 AUTHOR
 

@@ -14,9 +14,9 @@ use strict;
 use warnings;
 use DBIx::Array;
 
-my $connect=shift or die; #written for DBD::Oracle
-my $user=shift or die;
-my $pass=shift or die;
+my $connect=shift or die("$0 connection account password"); #written for DBD::Oracle
+my $user=shift or die("$0 connection account password");
+my $pass=shift or die("$0 connection account password");
 
 my $dba=DBIx::Array->new;
 $dba->connect($connect, $user, $pass, {AutoCommit=>1, RaiseError=>1});
@@ -33,3 +33,12 @@ sub sql { #Oracle SQL
                   TRIM(TO_CHAR(LEVEL, 'rn')) as "Roman Numeral"
              FROM DUAL CONNECT BY LEVEL <= ? ORDER BY LEVEL};
 }
+
+=head1 OUTPUT
+
+=begin html
+
+<table><tr><td>Number</td> <td>Roman Numeral</td></tr> <tr><td>1</td> <td>i</td></tr> <tr><td>2</td> <td>ii</td></tr> <tr><td>3</td> <td>iii</td></tr> <tr><td>4</td> <td>iv</td></tr> <tr><td>5</td> <td>v</td></tr> <tr><td>6</td> <td>vi</td></tr> <tr><td>7</td> <td>vii</td></tr> <tr><td>8</td> <td>viii</td></tr> <tr><td>9</td> <td>ix</td></tr> <tr><td>10</td> <td>x</td></tr> <tr><td>11</td> <td>xi</td></tr> <tr><td>12</td> <td>xii</td></tr> <tr><td>13</td> <td>xiii</td></tr> <tr><td>14</td> <td>xiv</td></tr> <tr><td>15</td> <td>xv</td></tr></table>
+
+=end html
+

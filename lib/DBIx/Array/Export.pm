@@ -3,7 +3,7 @@ use base qw{DBIx::Array};
 use strict;
 use warnings;
 
-our $VERSION='0.17';
+our $VERSION='0.18';
 our $PACKAGE=__PACKAGE__;
 
 =head1 NAME
@@ -155,11 +155,11 @@ sub xls_arrayarrayname {
 
 Switch out L<XML::Simple> for L<XML::LibXML::LazyBuilder>
 
-Add XLS export with L<Spreadsheet::WriteExcel::Simple::Tabs>
-
 =head1 BUGS
 
 =head1 SUPPORT
+
+DavisNetworks.com supports all Perl applications big or small.
 
 =head1 AUTHOR
 
@@ -175,8 +175,7 @@ This program is free software licensed under the...
 
   The BSD License
 
-The full text of the license can be found in the
-LICENSE file included with this module.
+The full text of the license can be found in the LICENSE file included with this module.
 
 =head1 SEE ALSO
 
