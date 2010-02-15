@@ -7,6 +7,7 @@ MANIFEST
 README
 t/001_use.t
 t/002_functions.t
+t/004_sql_abstract.t
 Todo
 scripts/DBIx-Array-tablename.pl
 scripts/DBIx-Array-bind_param.pl

@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use DBI;
 
-our $VERSION='0.19';
+our $VERSION='0.20';
 
 =head1 NAME
 
@@ -33,7 +33,7 @@ This module is for people who understand SQL and who understand fairly complex P
                FROM DUAL CONNECT BY LEVEL <= ? ORDER BY LEVEL};
   }
 
-This module is used to connect to Oracle 10g (L<DBD::Oracle>), MySql 4 and 5 (L<DBD::mysql>) and Microsoft SQL Server (L<DBD::Sybase>) databases in a 24x7 production environment.  The test are written against L<DBD::SQLite>, L<DBD::CSV> and L<DBD::XBase>.
+This module is used to connect to Oracle 10g (L<DBD::Oracle>), MySql 4 and 5 (L<DBD::mysql>) and Microsoft SQL Server (L<DBD::Sybase>) databases in a 24x7 production environment.  The tests are written against L<DBD::CSV> and L<DBD::XBase>.
 
 =head1 USAGE
 
@@ -72,7 +72,7 @@ sub initialize {
 
 =head2 name
 
-Set or returns a user friendly identification string for this database connection
+Sets or returns a user friendly identification string for this database connection
 
   my $name=$dbx->name;
   my $name=$dbx->name($string);
@@ -159,6 +159,17 @@ Pass through to  dbh->{'AutoCommit'} or dbh->{'AutoCommit'}=shift;
   $dbx->AutoCommit(1);
   &doSomething if $dbx->AutoCommit;
 
+For transactions that must complete together, I recommend
+
+  { #block to keep local... well... local.
+    local $dbx->dbh->{"AutoCommit"}=0;
+    $dbx->insert($sql1, @bind1);
+    $dbx->update($sql2, @bind2);
+    $dbx->insert($sql3, @bind3);
+  } #What is AutoCommit now?  Do you care?
+
+If AutoCommit reverts to true at the end of the block then DBI commits.  Else AutoCommit is still false and still not commited.  This allows higher layers to determine commit functionality.
+
 =cut
 
 sub AutoCommit {
@@ -206,8 +217,11 @@ Sets or returns the database handle object.
 =cut
 
 sub dbh {
-  my $self = shift();
-  $self->{'dbh'}=shift() if @_;
+  my $self=shift;
+  if (@_) {
+    $self->{'dbh'}=shift;
+    $self->{"_prepared"}=undef; #clear cache if we switch handles
+  }
   return $self->{'dbh'};
 }
 
@@ -230,16 +244,29 @@ Note: In true Perl fashion extra hash binds are ignored.
 
   my $two=$dbx->sqlscalar("select ? from dual", "two");   #returns "two"
 
+Scalar refererences are passed in and out with a hash bind.
+
   my $inout=3;
   $dbx->execute("BEGIN :inout := :inout * 2; END;", {inout=>\$inout});
   print "$inout\n";  #$inout is 6
+
+Direct Plug-in for L<SQL::Abstract> but no column alias support.
+
+  my $sabs=SQL::Abstract->new;
+  my $sth=$dbx->sqlcursor($sabs->select($table, \@fields, \%where, \@sort));
 
 =cut
 
 sub sqlcursor {
   my $self=shift;
   my $sql=shift;
-  my $sth=$self->dbh->prepare($sql)    or die($self->errstr);
+  my $sth=$self->_prepared->{$sql};
+  unless ($sth) {
+    $sth=$self->dbh->prepare($sql)     or die($self->errstr);
+    #clear cache if over limit
+    $self->{"_prepared"}=undef if scalar(keys %{$self->_prepared}) > 16;
+    $self->_prepared->{$sql}=$sth;
+  }
   if (ref($_[0]) eq "ARRAY") {
     $sth->execute(@{$_[0]})            or die($self->errstr);
   } elsif (ref($_[0]) eq "HASH") {
@@ -258,9 +285,15 @@ sub sqlcursor {
   return $sth;
 }
 
+sub _prepared {
+  my $self=shift;
+  $self->{"_prepared"}={} unless ref($self->{"_prepared"}) eq "HASH";
+  return $self->{"_prepared"};
+}
+
 =head2 sqlscalar
 
-Returns the SQL query as a scalar.
+Returns the SQL result as a scalar.
 
 This works great for selecting one value.
 
@@ -278,7 +311,7 @@ sub sqlscalar {
 
 =head2 sqlarray
 
-Returns the SQL query as an array or array reference.
+Returns the SQL result as an array or array reference.
 
 This works great for selecting one column from a table or selecting one row from a table.
 
@@ -300,7 +333,7 @@ sub sqlarray {
 
 =head2 sqlhash
 
-Returns the first two columns of the SQL query as a hash or hash reference {Key=>Value, Key=>Value, ...}
+Returns the first two columns of the SQL result as a hash or hash reference {Key=>Value, Key=>Value, ...}
 
   $hash=$dbx->sqlhash($sql,  @parameters); #returns {$=>$, $=>$, ...}
   %hash=$dbx->sqlhash($sql,  @parameters); #returns ($=>$, $=>$, ...)
@@ -323,7 +356,7 @@ sub sqlhash {
 
 =head2 sqlarrayarray
 
-Returns the SQL data as an array or array ref of array references ([],[],...) or [[],[],...]
+Returns the SQL result as an array or array ref of array references ([],[],...) or [[],[],...]
 
   $array=$dbx->sqlarrayarray($sql,  @parameters); #returns [[$,$,...],[],[],...]
   @array=$dbx->sqlarrayarray($sql,  @parameters); #returns ([$,$,...],[],[],...)
@@ -342,7 +375,7 @@ sub sqlarrayarray {
 
 =head2 sqlarrayarrayname
 
-Returns the SQL data as an array or array ref of array references ([],[],...) or [[],[],...] where the first rows is the column names
+Returns the SQL result as an array or array ref of array references ([],[],...) or [[],[],...] where the first rows is the column names
 
   $array=$dbx->sqlarrayarrayname($sql,  @parameters); #returns [[$,$,...],[]...]
   @array=$dbx->sqlarrayarrayname($sql,  @parameters); #returns ([$,$,...],[]...)
@@ -395,7 +428,7 @@ sub _sqlarrayarray {
 
 =head2 sqlarrayhash
 
-Returns the SQL data as an array or array ref of hash references ({},{},...) or [{},{},...]
+Returns the SQL result as an array or array ref of hash references ({},{},...) or [{},{},...]
 
   $array=$dbx->sqlarrayhash($sql,  @parameters); #returns [{},{},{},...]
   @array=$dbx->sqlarrayhash($sql,  @parameters); #returns ({},{},{},...)
@@ -414,7 +447,7 @@ sub sqlarrayhash {
 
 =head2 sqlarrayhashname
 
-Returns the SQL of data as an array or array ref of hash references ([],{},{},...) or [[],{},{},...] where the first rows is an array reference of the column names
+Returns the SQL result as an array or array ref of hash references ([],{},{},...) or [[],{},{},...] where the first rows is an array reference of the column names
 
   $array=$dbx->sqlarrayhashname($sql,  @parameters); #returns [[],{},{},...]
   @array=$dbx->sqlarrayhashname($sql,  @parameters); #returns ([],{},{},...)
@@ -433,7 +466,7 @@ sub sqlarrayhashname {
 
 =head2 _sqlarrayhash
 
-Returns the SQL data as an array or array ref of hash references ({},{},...) or [{},{},...]
+Returns the SQL result as an array or array ref of hash references ({},{},...) or [{},{},...]
 
   $array=$dbx->_sqlarrayhash(sql=>$sql, param=>\@parameters, name=>1);
   @array=$dbx->_sqlarrayhash(sql=>$sql, param=>\@parameters, name=>1);
@@ -458,8 +491,7 @@ sub _sqlarrayhash {
 
 =head2 sqlsort
 
-Returns the SQL statments with the correct ORDER BY clause given a SQL statment (without an ORDER BY clause) and a signed 
-integer on which column to sort.
+Returns the SQL statments with the correct ORDER BY clause given a SQL statment (without an ORDER BY clause) and a signed integer on which column to sort.
 
   my $sql=$dbx->sqlsort(qq{SELECT 1,'Z' FROM DUAL UNION SELECT 2,'A' FROM DUAL}, -2);
 
@@ -484,8 +516,7 @@ sub sqlsort {
 
 =head2 sqlarrayarraynamesort
 
-Returns a sqlarrayarrayname for $sql sorted on column $n where n is an integer asending for positive, desending for negative, 
-and 0 for no sort.
+Returns a sqlarrayarrayname for $sql sorted on column $n where n is an integer asending for positive, desending for negative, and 0 for no sort.
 
   my $data=$dbx->sqlarrayarraynamesort($sql, $n,  @parameters);
   my $data=$dbx->sqlarrayarraynamesort($sql, $n, \@parameters);
@@ -508,10 +539,18 @@ sub sqlarrayarraynamesort {
 
 Returns the number of rows updated or deleted by the SQL statement.
 
+  $rows=$dbx->insert( $sql,  @parameters);
   $rows=$dbx->update( $sql,  @parameters);
   $rows=$dbx->delete( $sql,  @parameters);
   $rows=$dbx->execute($sql, \@parameters);
   $rows=$dbx->execute($sql, \%parameters);
+
+Hey doesn't that look just like the return from L<SQL::Abstract>
+
+  my $sabs=SQL::Abstract->new;
+  $rows=$dbx->insert($sabs->insert($table, \%field));
+  $rows=$dbx->update($sabs->update($table, \%field, \%where));
+  $rows=$dbx->delete($sabs->delete($table, \%where));
 
 Remember to commit or use AutoCommit
 
@@ -527,8 +566,8 @@ Note: Currently update, insert, delete, and execute all point to the same method
 *execute=\&update;
 
 sub update {
-  my $self=shift();
-  my $sql=shift();
+  my $self=shift;
+  my $sql=shift;
   my $sth=$self->sqlcursor($sql, @_) or die($self->errstr);
   my $rows=$sth->rows;
   $sth->finish;
@@ -537,9 +576,9 @@ sub update {
 
 =head1 TODO
 
-I would like to add caching service in the sqlcursor method.
-
 =head1 BUGS
+
+Send email to author and log on RT.
 
 =head1 SUPPORT
 
@@ -559,12 +598,17 @@ This program is free software licensed under the...
 
   The BSD License
 
-The full text of the license can be found in the
-LICENSE file included with this module.
+The full text of the license can be found in the LICENSE file included with this module.
 
 =head1 SEE ALSO
 
-L<DBI>, L<DBIx::DWIW>, L<DBIx::Wrapper>, L<DBIx::Simple>
+=head2 The Competition
+
+L<DBIx::DWIW>, L<DBIx::Wrapper>, L<DBIx::Simple>
+
+=head2 The Building Blocks
+
+L<DBI>, L<SQL::Abstract>
 
 =cut
 
