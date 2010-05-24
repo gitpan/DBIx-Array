@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use DBI;
 
-our $VERSION='0.20';
+our $VERSION='0.21';
 
 =head1 NAME
 
@@ -18,7 +18,7 @@ DBIx::Array - This module is a wrapper around DBI with array interfaces
 
 =head1 DESCRIPTION
 
-This module is for people who understand SQL and who understand fairly complex Perl data structures.  If you undstand how to modify your SQL to meet your data requirements then this module is for you.  In the example below, only one line of code is needed to generate an entire HTML table. 
+This module is for people who truly understand SQL and who understand Perl data structures.  If you understand how to modify your SQL to meet your data requirements then this module is for you.  In the example below, only one line of code is needed to generate an entire HTML table.
 
   print &tablename($dba->sqlarrayarrayname(&sql, 15)), "\n";
    
@@ -44,7 +44,7 @@ This module is used to connect to Oracle 10g (L<DBD::Oracle>), MySql 4 and 5 (L<
   my $dbx=DBIx::Array->new();
   $dbx->connect(...); #connect to database, sets and returns dbh
 
-  my $dbx=DBIx::Array->new(dbh=>$dbh); #aready have a handle
+  my $dbx=DBIx::Array->new(dbh=>$dbh); #already have a handle
 
 =cut
 
@@ -168,7 +168,7 @@ For transactions that must complete together, I recommend
     $dbx->insert($sql3, @bind3);
   } #What is AutoCommit now?  Do you care?
 
-If AutoCommit reverts to true at the end of the block then DBI commits.  Else AutoCommit is still false and still not commited.  This allows higher layers to determine commit functionality.
+If AutoCommit reverts to true at the end of the block then DBI commits.  Else AutoCommit is still false and still not committed.  This allows higher layers to determine commit functionality.
 
 =cut
 
@@ -375,7 +375,7 @@ sub sqlarrayarray {
 
 =head2 sqlarrayarrayname
 
-Returns the SQL result as an array or array ref of array references ([],[],...) or [[],[],...] where the first rows is the column names
+Returns the SQL result as an array or array ref of array references ([],[],...) or [[],[],...] where the first row contains an array reference to the column names
 
   $array=$dbx->sqlarrayarrayname($sql,  @parameters); #returns [[$,$,...],[]...]
   @array=$dbx->sqlarrayarrayname($sql,  @parameters); #returns ([$,$,...],[]...)
@@ -437,6 +437,14 @@ Returns the SQL result as an array or array ref of hash references ({},{},...) o
   $array=$dbx->sqlarrayhash($sql, \%parameters); #returns [{},{},{},...]
   @array=$dbx->sqlarrayhash($sql, \%parameters); #returns ({},{},{},...)
 
+This method is best used to select a list of hashes out of the database to bless directly into a package.
+
+  my $sql=q{SELECT COL1 AS "id", COL2 AS "name" FROM TABLE1};
+  my @objects=map {bless $_, MyPackage} $dbx->sqlarrayhash($sql,  @parameters);
+  my @objects=map {MyPackage->new(%$_)} $dbx->sqlarrayhash($sql,  @parameters);
+
+The @objects array is now a list of blessed MyPackage objects.
+
 =cut
 
 sub sqlarrayhash {
@@ -447,7 +455,7 @@ sub sqlarrayhash {
 
 =head2 sqlarrayhashname
 
-Returns the SQL result as an array or array ref of hash references ([],{},{},...) or [[],{},{},...] where the first rows is an array reference of the column names
+Returns the SQL result as an array or array ref of hash references ([],{},{},...) or [[],{},{},...] where the first row contains an array reference to the column names
 
   $array=$dbx->sqlarrayhashname($sql,  @parameters); #returns [[],{},{},...]
   @array=$dbx->sqlarrayhashname($sql,  @parameters); #returns ([],{},{},...)
@@ -489,9 +497,9 @@ sub _sqlarrayhash {
   return wantarray ? @rows : \@rows;
 }
 
-=head2 sqlsort
+=head2 sqlsort (Oracle Specific?)
 
-Returns the SQL statments with the correct ORDER BY clause given a SQL statment (without an ORDER BY clause) and a signed integer on which column to sort.
+Returns the SQL statement with the correct ORDER BY clause given a SQL statement (without an ORDER BY clause) and a signed integer on which column to sort.
 
   my $sql=$dbx->sqlsort(qq{SELECT 1,'Z' FROM DUAL UNION SELECT 2,'A' FROM DUAL}, -2);
 
@@ -516,13 +524,13 @@ sub sqlsort {
 
 =head2 sqlarrayarraynamesort
 
-Returns a sqlarrayarrayname for $sql sorted on column $n where n is an integer asending for positive, desending for negative, and 0 for no sort.
+Returns a sqlarrayarrayname for $sql sorted on column $n where n is an integer ascending for positive, descending for negative, and 0 for no sort.
 
   my $data=$dbx->sqlarrayarraynamesort($sql, $n,  @parameters);
   my $data=$dbx->sqlarrayarraynamesort($sql, $n, \@parameters);
   my $data=$dbx->sqlarrayarraynamesort($sql, $n, \%parameters);
 
-Note: $sql must not have an "ORDER BY" clause in order for this function to work corectly.
+Note: $sql must not have an "ORDER BY" clause in order for this function to work correctly.
 
 =cut
 
@@ -554,7 +562,7 @@ Hey doesn't that look just like the return from L<SQL::Abstract>
 
 Remember to commit or use AutoCommit
 
-Note: It appears that some drivers do not support the count of rows.  For example, DBD::Oracle does not support row counts on delete instead the value apears to be a success code.
+Note: It appears that some drivers do not support the count of rows.  For example, DBD::Oracle does not support row counts on delete instead the value appears to be a success code.
 
 Note: Currently update, insert, delete, and execute all point to the same method.  This may change in the future if we need to change the behavior of one method.  So, please use the correct method name for your function.
 
@@ -576,13 +584,15 @@ sub update {
 
 =head1 TODO
 
+Sort functions are not portable.
+
 =head1 BUGS
 
 Send email to author and log on RT.
 
 =head1 SUPPORT
 
-DavisNetworks.com supports all Perl applications big or small.
+DavisNetworks.com supports all Perl applications including this package.
 
 =head1 AUTHOR
 
