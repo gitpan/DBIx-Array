@@ -3,7 +3,7 @@ use base qw{DBIx::Array};
 use strict;
 use warnings;
 
-our $VERSION='0.18';
+our $VERSION='0.22';
 our $PACKAGE=__PACKAGE__;
 
 =head1 NAME
@@ -48,7 +48,7 @@ sub xml_arrayhashname {
       if (defined($_->{$key})) {
         $_->{$key}=[$_->{$key}];  #This is needed for XML::Simple to make pretty XML.
       } else {
-        delete($_->{$key});     #This is a choice that I made but I'm not sure if it's smart
+        CORE::delete($_->{$key});     #This is a choice that I made but I'm not sure if it's smart
       }
     }
   }
@@ -88,13 +88,13 @@ sub csv_arrayarrayname {
     die("Error: $PACKAGE->csv_arrayarrayname method requres $module");
   } else {
     my $csv=Text::CSV_XS->new;
-    return join "", map {&join_csv($csv, @$_)} @$data;
+    return join "", map {&_join_csv($csv, @$_)} @$data;
   }
 
-  sub join_csv {
+  sub _join_csv {
     my $csv=shift;
     my $status=$csv->combine(@_);
-    return $status ? $csv->string."\r\n" : undef; #\r\n per RFC 4180
+    return $status ? $csv->string."\r\n" : (); #\r\n per RFC 4180
   }
 }
 
@@ -157,6 +157,8 @@ Switch out L<XML::Simple> for L<XML::LibXML::LazyBuilder>
 
 =head1 BUGS
 
+Send email to author and log on RT.
+
 =head1 SUPPORT
 
 DavisNetworks.com supports all Perl applications big or small.
@@ -179,7 +181,13 @@ The full text of the license can be found in the LICENSE file included with this
 
 =head1 SEE ALSO
 
+=head2 Building Blocks
+
 L<XML::Simple>, L<Text::CSV_XS>, L<Spreadsheet::WriteExcel::Simple::Tabs>
+
+=head2 Similar Capabilities
+
+L<Data::Table> see csv and tsv methods, L<Data::Table::Excel>
 
 =cut
 

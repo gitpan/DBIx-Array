@@ -13,4 +13,5 @@ scripts/DBIx-Array-tablename.pl
 scripts/DBIx-Array-bind_param.pl
 scripts/DBIx-Array-export-xls.pl
 scripts/DBIx-Array-export-xls.pl.xls
+perl-DBIx-Array.spec
 META.yml                                 Module meta-data (added by MakeMaker)

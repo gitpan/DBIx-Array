@@ -174,5 +174,4 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
     
     $dba->dbh->do("DROP TABLE $table");
   }
-  
 }

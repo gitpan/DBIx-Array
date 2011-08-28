@@ -1,58 +1,85 @@
 Revision history for Perl module DBIx-Array
 
+0.22 2011-08-27
+  - Updated documentation
+  - Added rpm spec file to distribution
+  - Fixed DBD::mysql issue with $sth->{'NAME'} in the _sqlarrayhash method
+  - Added DBD::CSV as a build requirement but should not be an install requirement
+  - Defined function "delete" and CORE::delete in Export.pm so as to not be confused with "delete" method
+
 0.21 2010-05-24
   - Updated documentation and corrected various spelling issues
   - Changes file now sorted descending
+
 0.20 2010-02-14
   - Added prepare caching service
   - Updated documentation with SQL::Abstract examples
   - Added SQL::Abstract tests
+
 0.19 2010-01-20
   - Removed DBD::SQLite tests since it appears to not be stable cross platform
+
 0.18 2010-01-03
   - Updated tests so that they "should" be more successful on Win32 platforms
   - Added runtime test for drivers for "DBD::SQLite", "DBD::CSV", "DBD::XBase"
+
 0.17 2009-12-15
   - RT 52393 Documentation update
   - All exports require binmode, added binmode note to csv_cursor
+
 0.16 2009-12-08
   - CSV export is now "\r\n" per RFC 4180
+
 0.15 2009-12-01
   - Documentation
+
 0.14 2009-12-01
   - Moved exports to separate package and have dependant modules dynamically loaded (Not backward compatible.  Users who used the exports will have to use DBIx::Array::Export; now.)
   - Documentation
   - Updated Tests
   - Added xls_arrayarrayname export
   - Move export compile time requirements to run time requirements
+
 0.13 2009-11-30
   - Added hash ref and array ref capability to the sqlcursor method 100% backwards compatibility
+
 0.12 2009-10-22
   - Removed test for export methods from distribution
+
 0.11 2009-10-21
   - DBD::CSV no longer preserves case. 0.22 did 0.25 does not.
+
 0.10 2009-10-20
   - Added insert alias for exec
   - Added dependacy on SQL::Statement=>1.005 for one tester out there but I don't even "use" the package.
   - Added test for export methods
+
 0.09 2008-09-06
   - Support for $sth->{'NAME'} in DBD::mysql must be read before $sth is empty
+
 0.08 2008-07-19
   - Added csv_arrayarrayname method
   - Added csv_cursor method
+
 0.07 2008-07-18
   - Added xml_arrayhashname method
+
 0.06 2008-07-13
   - Updated Dependencies
+
 0.05 2008-07-13
   - CPAN tests fail with DBD::SQLite.
   - Changed to DBD::CSV. I use DBD::Oracle and DBD:MySQL every day!
   - Removed *database=\&name; alias
+
 0.04 2008-07-11
   - Trying to get DBD::SQLite tests to work
+
 0.03 2008-07-11
   - Added *database=\&name; alias to support package migration
+
 0.02 2008-07-11
   - Added name method
+
 0.01 2008-07-03
   - Original Version

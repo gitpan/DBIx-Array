@@ -5,10 +5,8 @@ WriteMakefile(
  AUTHOR       => 'Michael R. Davis (domain=>stopllc,tld=>com,account=>mdavis)',
  ABSTRACT_FROM=> 'lib/DBIx/Array.pm',
  PREREQ_PM    => {
-               'strict'                  => 0,
-               'warnings'                => 0,
-               'base'                    => 0,
                'DBI'                     => 0,
                'Test::Simple'            => 0,    #for Test::More
+               'DBD::CSV'                => 0,    #for tests
                  },
 );
