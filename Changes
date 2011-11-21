@@ -1,11 +1,15 @@
 Revision history for Perl module DBIx-Array
 
+0.23 2011-11-21
+  - Corrected three spelling mistakes
+  - Updated spec to removed hard coded requires for DBI
+
 0.22 2011-08-27
   - Updated documentation
   - Added rpm spec file to distribution
   - Fixed DBD::mysql issue with $sth->{'NAME'} in the _sqlarrayhash method
   - Added DBD::CSV as a build requirement but should not be an install requirement
-  - Defined function "delete" and CORE::delete in Export.pm so as to not be confused with "delete" method
+  - Defined function "delete" as CORE::delete in Export.pm so as to not be confused with "delete" method
 
 0.21 2010-05-24
   - Updated documentation and corrected various spelling issues

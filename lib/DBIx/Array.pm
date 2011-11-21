@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use DBI;
 
-our $VERSION='0.22';
+our $VERSION='0.23';
 
 =head1 NAME
 
@@ -33,7 +33,7 @@ This module is for people who truly understand SQL and who understand Perl data 
                FROM DUAL CONNECT BY LEVEL <= ? ORDER BY LEVEL};
   }
 
-This module is used to connect to both Oracle 10g and 11g using L<DBD::Oracle> on both Linux and Win32, MySQL 4 and 5 using L<DBD::mysql> on Linux, and Microsoft SQL Server using L<DBD::Sybase> on Linux and using L<DBD:ODBC> on Win32 systems in a 24x7 production environment.  The tests are written against L<DBD::CSV> and L<DBD::XBase>.
+This module is used to connect to both Oracle 10g and 11g using L<DBD::Oracle> on both Linux and Win32, MySQL 4 and 5 using L<DBD::mysql> on Linux, and Microsoft SQL Server using L<DBD::Sybase> on Linux and using L<DBD::ODBC> on Win32 systems in a 24x7 production environment.  The tests are written against L<DBD::CSV> and L<DBD::XBase>.
 
 =head1 USAGE
 
@@ -249,7 +249,7 @@ Note: In true Perl fashion extra hash binds are ignored.
 
   my $two=$dbx->sqlscalar("select ? from dual", "two");   #returns "two"
 
-Scalar refererences are passed in and out with a hash bind.
+Scalar references are passed in and out with a hash bind.
 
   my $inout=3;
   $dbx->execute("BEGIN :inout := :inout * 2; END;", {inout=>\$inout});
@@ -614,7 +614,7 @@ Note: Some Oracle clients do not support row counts on delete instead the value 
 
 =head2 execute, exec
 
-Executes stored proceedures.
+Executes stored procedures.
 
   my $out;
   my $rows=$dbx->execute($sql, $in, \$out);            #pass in/out vars as scalar reference

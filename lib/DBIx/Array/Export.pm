@@ -3,7 +3,7 @@ use base qw{DBIx::Array};
 use strict;
 use warnings;
 
-our $VERSION='0.22';
+our $VERSION='0.23';
 our $PACKAGE=__PACKAGE__;
 
 =head1 NAME
@@ -105,7 +105,7 @@ Writes CSV to file handle given an executed cursor
   binmode($fh);
   $dbx->csv_cursor($fh, $sth);
 
-Due to portablilty issues, I choose not to force the passed file handle into binmode.  However, it IS required!  For most file handle objects you can run binmode($fh) or $fh->binmode;
+Due to portability issues, I choose not to force the passed file handle into binmode.  However, it IS required!  For most file handle objects you can run binmode($fh) or $fh->binmode;
 
 =cut
 

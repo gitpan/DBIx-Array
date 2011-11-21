@@ -1,5 +1,5 @@
 Name:           perl-DBIx-Array
-Version:        0.22
+Version:        0.23
 Release:        1%{?dist}
 Summary:        This module is a wrapper around DBI with array interfaces
 License:        BSD
@@ -18,7 +18,6 @@ BuildRequires:  perl(SQL::Abstract)
 BuildRequires:  perl(Test::Simple)
 BuildRequires:  perl(Text::CSV_XS)
 BuildRequires:  perl(XML::Simple)
-Requires:       perl(DBI)
 Requires:       perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 
 %description
