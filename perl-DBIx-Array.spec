@@ -1,5 +1,5 @@
 Name:           perl-DBIx-Array
-Version:        0.23
+Version:        0.25
 Release:        1%{?dist}
 Summary:        This module is a wrapper around DBI with array interfaces
 License:        BSD
@@ -55,5 +55,15 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/*
 
 %changelog
+* Sun Apr 22 2012 Michael R. Davis (mdavis@stopllc.com) 0.24
+- Updated for new version
+
+* Fri Nov 25 2011 Michael R. Davis (mdavis@stopllc.com) 0.23-2
+- Updated changelog (#754892)
+
+* Mon Nov 21 2011 Michael R. Davis (mdavis@stopllc.com) 0.23-1
+- Updated for version 0.23
+- Removed hard coded requires for DBI since rpmbuild finds them from sources (#754892)
+
 * Sun Aug 28 2011 Michael R. Davis (mdavis@stopllc.com) 0.22-1
-- See Changes files
+- Created spec file with cpanspec

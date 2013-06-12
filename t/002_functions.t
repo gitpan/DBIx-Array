@@ -1,8 +1,7 @@
 # -*- perl -*-
-
-# t/001_load.t - check module loading and create testing directory
-
-use Test::More tests => 114 * 2 + 1;
+use strict;
+use warnings;
+use Test::More tests => 118 * 2 + 1;
 
 BEGIN { use_ok( 'DBIx::Array' ); }
 
@@ -47,12 +46,14 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
     is($array[1], 1, '$dba->sqlarray[1]');
     is($array[2], 2, '$dba->sqlarray[2]');
     
-   #This only works in Oracle
-   #my @array=$dba->sqlarray("SELECT F1,F2,F3 FROM $table WHERE F1 = :zero", {zero=>0});
-   #is(scalar(@array), 3, 'named bind scalar(@$array)');
-   #is($array[0], 0, 'named bind $dba->sqlarray[0]');
-   #is($array[1], 1, 'named bind $dba->sqlarray[1]');
-   #is($array[2], 2, 'named bind $dba->sqlarray[2]');
+   SKIP: {
+     skip "Database driver $driver does not support named parameters", 4 if $driver eq "DBD::CSV";
+     my @array=$dba->sqlarray("SELECT F1,F2,F3 FROM $table WHERE F1 = :zero", {zero=>0});
+     is(scalar(@array), 3, 'named bind scalar(@$array)');
+     is($array[0], 0, 'named bind $dba->sqlarray[0]');
+     is($array[1], 1, 'named bind $dba->sqlarray[1]');
+     is($array[2], 2, 'named bind $dba->sqlarray[2]');
+   }
     
     my $hash=$dba->sqlhash("SELECT F1,F2 FROM $table");
     isa_ok($hash, "HASH", 'sqlarray scalar context');

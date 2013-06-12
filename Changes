@@ -1,5 +1,20 @@
 Revision history for Perl module DBIx-Array
 
+TODO:
+  - Add SQL::Abstract methods
+
+0.25 2013-03-24
+  - Added Session objects mostly for Oracle.
+    - MODULE, CLIENT_IDENTIFIER, CLIENT_INFO, and ACTION
+
+0.24 2012-04-22
+  - Updated documentation
+  - Updated tests
+
+0.23_2 2011-11-25
+  - Updated spec for Fedora 16
+  - Updated copyright year in LICENSE
+
 0.23 2011-11-21
   - Corrected three spelling mistakes
   - Updated spec to removed hard coded requires for DBI

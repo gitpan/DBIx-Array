@@ -1,5 +1,6 @@
 # -*- perl -*-
-
+use strict;
+use warnings;
 use Test::More tests => 120;
 
 BEGIN { use_ok( 'DBIx::Array' ); }

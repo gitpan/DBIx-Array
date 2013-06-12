@@ -3,7 +3,8 @@ use strict;
 use warnings;
 use DBI;
 
-our $VERSION='0.23';
+our $VERSION='0.25';
+our $PACKAGE=__PACKAGE__;
 
 =head1 NAME
 
@@ -15,6 +16,16 @@ DBIx::Array - This module is a wrapper around DBI with array interfaces
   my $dbx=DBIx::Array->new;
   $dbx->connect($connection, $user, $pass, \%opt); #passed to DBI
   my @array=$dbx->sqlarray($sql, @params);
+
+With a connected database handle
+
+  use DBIx::Array;
+  my $dbx=DBIx::Array->new(dbh=>$dbh);
+
+With stored connection information from a File
+
+  use DBIx::Array::Connect;
+  my $dbx=DBIx::Array::Connect->new(file=>"my.ini")->connect("mydatabase");
 
 =head1 DESCRIPTION
 
@@ -402,24 +413,22 @@ sub sqlarrayarrayname {
   return $self->_sqlarrayarray(sql=>$sql, param=>[@_], name=>1);
 }
 
-=head2 _sqlarrayarray
-
-  my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>1);
-  my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>1);
-  my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>0);
-  my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>0);
-
-  my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>1);
-  my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>1);
-  my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>0);
-  my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>0);
-
-  my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>1);
-  my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>1);
-  my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>0);
-  my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>0);
-
-=cut
+# _sqlarrayarray
+#
+# my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>1);
+# my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>1);
+# my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>0);
+# my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[ @parameters], name=>0);
+#
+# my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>1);
+# my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>1);
+# my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>0);
+# my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\@parameters], name=>0);
+#
+# my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>1);
+# my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>1);
+# my $array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>0);
+# my @array=$dbx->_sqlarrayarray(sql=>$sql, param=>[\%parameters], name=>0);
 
 sub _sqlarrayarray {
   my $self=shift;
@@ -482,16 +491,14 @@ sub sqlarrayhashname {
   return $self->_sqlarrayhash(sql=>$sql, param=>[@_], name=>1);
 }
 
-=head2 _sqlarrayhash
-
-Returns the SQL result as an array or array ref of hash references ({},{},...) or [{},{},...]
-
-  my $array=$dbx->_sqlarrayhash(sql=>$sql, param=>\@parameters, name=>1);
-  my @array=$dbx->_sqlarrayhash(sql=>$sql, param=>\@parameters, name=>1);
-  my $array=$dbx->_sqlarrayhash(sql=>$sql, param=>\@parameters, name=>0);
-  my @array=$dbx->_sqlarrayhash(sql=>$sql, param=>\@parameters, name=>0);
-
-=cut
+# _sqlarrayhash
+#
+# Returns the SQL result as an array or array ref of hash references ({},{},...) or [{},{},...]
+#
+# my $array=$dbx->_sqlarrayhash(sql=>$sql, param=>\@parameters, name=>1);
+# my @array=$dbx->_sqlarrayhash(sql=>$sql, param=>\@parameters, name=>1);
+# my $array=$dbx->_sqlarrayhash(sql=>$sql, param=>\@parameters, name=>0);
+# my @array=$dbx->_sqlarrayhash(sql=>$sql, param=>\@parameters, name=>0);
 
 sub _sqlarrayhash {
   my $self=shift;
@@ -621,10 +628,188 @@ Executes stored procedures.
   my $rows=$dbx->execute($sql, [$in, \$out]);
   my $rows=$dbx->execute($sql, {in=>$in, out=>\$out});
 
+Note: Currently update, insert, delete, and execute all point to the same method.  This may change in the future if we need to change the behavior of one method.  So, please use the correct method name for your function.
+
 =cut
 
 *execute=\&update;
 *exec=\&update;   #deprecated
+
+=head1 Get Info Methods
+
+=head2 dbms_name
+
+Return the DBMS Name (e.g. Oracle)
+
+=cut
+
+sub dbms_name {shift->dbh->get_info(17)};
+
+=head1 Session Helpers
+
+These methods allow the setting of Oracle session features that are available in the v$session table.  If other databases support these features, please let me know.  But, as it stands, these method are non operational unless SQL_DBMS_NAME is Oracle.
+
+=head2 module
+
+Sets and returns the v$session.module (Oracle) value.
+
+Note: Module is set for you by BDB::Oracle.  However you may set it however you'd like.  It should be set once after connection and left alone.
+
+  $dbx->module("perl@host");      #normally set by DBD::Oracle
+  $dbx->module($module, $action); #can set initial action too.
+  my $module=$dbx->module();
+
+=cut
+
+sub module {
+  my $self=shift;
+  return unless $self->dbms_name eq 'Oracle';
+  if (@_) {
+    my $module=shift;
+    my $action=shift;
+    $self->execute($self->_set_module_sql, $module, $action);
+  }
+  if (defined wantarray) {
+    return $self->sqlscalar($self->_sys_context_userenv_sql, 'MODULE');
+  } else {
+    return; #void context no need to hit the database
+  }
+}
+
+sub _set_module_sql {
+  return qq{
+            --Script: $0
+            --Package: $PACKAGE
+            --Method: _set_module_action_sql
+            BEGIN
+              DBMS_APPLICATION_INFO.set_module(module_name => ?, action_name => ?);
+            END;
+           };
+}
+
+=head2 client_info
+
+Sets and returns the v$session.client_info (Oracle) value.
+ 
+  $dbx->client_info("Running From crontab");
+  my $client_info=$dbx->client_info();
+
+You may use this field for anything up to 64 characters!
+
+  $dbx->client_info(join "~", (ver => 4, realm => "ldap", grp =>25)); #tilde is a fairly good separator
+  my %client_info=split(/~/, $dbx->client_info());
+
+=cut
+
+sub client_info {
+  my $self=shift;
+  return unless $self->dbms_name eq 'Oracle';
+  if (@_) {
+    my $text=shift;
+    $self->execute($self->_set_client_info_sql, $text);
+  }
+  if (defined wantarray) {
+    return $self->sqlscalar($self->_sys_context_userenv_sql, 'CLIENT_INFO');
+  } else {
+    return; #void context no need to hit the database
+  }
+}
+
+sub _set_client_info_sql {
+  return qq{
+            --Script: $0
+            --Package: $PACKAGE
+            --Method: _action_sql
+            BEGIN
+              DBMS_APPLICATION_INFO.set_client_info(client_info => ?);
+            END;
+           };
+}
+
+=head2 action
+
+Sets and returns the v$session.action (Oracle) value.
+
+  $dbx->action("We are Here");
+  my $action=$dbx->action();
+
+Note: This should be updated fairly often. Every loop if it runs for more than 5 seconds and may end up in V$SQL_MONITOR.
+
+=cut
+
+sub action {
+  my $self=shift;
+  return unless $self->dbms_name eq 'Oracle';
+  if (@_) {
+    my $text=shift;
+    $self->execute($self->_set_action_sql, $text);
+  }
+  if (defined wantarray) {
+    return $self->sqlscalar($self->_sys_context_userenv_sql, 'ACTION');
+  } else {
+    return; #void context no need to hit the database
+  }
+}
+
+sub _set_action_sql {
+  return qq{
+            --Script: $0
+            --Package: $PACKAGE
+            --Method: _action_sql
+            BEGIN
+              DBMS_APPLICATION_INFO.set_action(action_name => ?);
+            END;
+           };
+}
+
+=head2 client_identifier
+
+Sets and returns the v$session.client_identifier (Oracle) value.
+
+  $dbx->client_identifier($login);
+  my $client_identifier = $dbx->client_identifier();
+
+Note: This should be updated based on the login of the authenticated end user.  I use the client_info->{"realm"} if you have more than one authentication realm.
+
+For auditing add this a to an update trigger
+
+  new.UPDATED_USER = sys_context('USERENV', 'CLIENT_IDENTIFIER');
+
+=cut
+
+sub client_identifier {
+  my $self=shift;
+  return unless $self->dbms_name eq 'Oracle';
+  if (@_) {
+    my $text=shift;
+    $self->execute($self->_set_client_identifier_sql, $text);
+  }
+  if (defined wantarray) {
+    return $self->sqlscalar($self->_sys_context_userenv_sql, 'CLIENT_IDENTIFIER');
+  } else {
+    return; #void context no need to hit the database
+  }
+}
+
+sub _set_client_identifier_sql {
+  return qq{
+            --Script: $0
+            --Package: $PACKAGE
+            --Method: _client_identifier_sql
+            BEGIN
+              DBMS_SESSION.SET_IDENTIFIER(client_id => ?); 
+            END;
+           };
+}
+
+sub _sys_context_userenv_sql {
+  return qq{
+            --Script: $0
+            --Package: $PACKAGE
+            SELECT sys_context('USERENV',?)
+              FROM SYS.DUAL
+           };
+}
 
 =head1 TODO
 
