@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use DBI;
 
-our $VERSION='0.25';
+our $VERSION='0.26';
 our $PACKAGE=__PACKAGE__;
 
 =head1 NAME

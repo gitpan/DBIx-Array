@@ -1,7 +1,15 @@
 Revision history for Perl module DBIx-Array
 
 TODO:
-  - Add SQL::Abstract methods
+  - Add "int" namespace as wrapper around SQL::Interp::sql_interp_strict
+  - Add "abs" namespace as wrapper around SQL::Abstract especially for insert/update/delete
+  - Add "sql" namespace for current insert/update/delete
+  - Add sqlinsertlist method as $sth->execute_array({ArrayTupleFetch => sub { return shift @array_of_row_references}});
+    - Note: DBD::Oracle may already support "ArrayTuple" instead of just ArrayTupleFetch
+    - We may also want to use the bind_param_array and execute_array methods
+
+0.26 2013-06-18
+  - Fixed tests to pass SKIP blocks
 
 0.25 2013-03-24
   - Added Session objects mostly for Oracle.
