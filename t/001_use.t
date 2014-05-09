@@ -1,10 +1,11 @@
 # -*- perl -*-
 use strict;
 use warnings;
-use Test::More tests => 6;
+use Test::More tests => 7;
 
 BEGIN { use_ok( 'DBIx::Array' ); }
 BEGIN { use_ok( 'DBIx::Array::Export' ); }
+BEGIN { use_ok( 'DBIx::Array::Session::Action' ); }
 
 my $sdb = DBIx::Array->new (name=>"String");
 isa_ok ($sdb, 'DBIx::Array');

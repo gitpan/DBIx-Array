@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                DBIx-Array
-version:             0.26
+version:             0.47
 abstract:            This module is a wrapper around DBI with array interfaces
 license:             ~
 author:              
@@ -10,6 +10,7 @@ distribution_type:   module
 requires:     
     DBD::CSV:                      0
     DBI:                           0
+    Package::New:                  0
     Test::Simple:                  0
 meta-spec:
     url:     http://module-build.sourceforge.net/META-spec-v1.3.html

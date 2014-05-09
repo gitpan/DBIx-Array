@@ -1,61 +1,93 @@
 # -*- perl -*-
 use strict;
 use warnings;
-use Test::More tests => 120;
+use Test::More tests => 143 * 2 + 1;
 
 BEGIN { use_ok( 'DBIx::Array' ); }
 
+my $connection={
+                 "DBD::SQLite" => "dbi:SQLite:dbname=:memory",
+                 "DBD::CSV"    => "dbi:CSV:f_dir=.",
+                 "DBD::XBase"  => "dbi:XBase:.",
+               };
 
-SKIP: {
-    eval "require SQL::Abstract";
-    skip "SQL::Abstract not installed", 119 if $@;
-    my $sabs=SQL::Abstract->new;
-    isa_ok($sabs, 'SQL::Abstract');
-    my $dba=DBIx::Array->new;
-    isa_ok($dba, 'DBIx::Array');
+foreach my $driver ("DBD::CSV", "DBD::XBase") { 
+  #I can't get "DBD::SQLite" to pass tests on many platforms.
+  my $dba=DBIx::Array->new;
+  isa_ok($dba, 'DBIx::Array');
+  my $table="dbixarray";
+  unlink($table) if -w $table;
+  eval "require $driver";
+  my $no_driver=$@;
+  diag("Found database driver $driver") unless $no_driver;
+  my $reason="Database driver $driver not installed";
 
-    my $connection={"DBD::XBase"=>"dbi:XBase:."};
-    my $driver="DBD::XBase";
-    eval "require $driver";
-    skip "Database driver $driver not installed", 117 if $@;
-    diag("Found database driver $driver");
+  SKIP: {
+    skip $reason, 3 if $no_driver;
   
     die("connection not defined for $driver") unless $connection->{$driver};
     $dba->connect($connection->{$driver}, "", "", {RaiseError=>0, AutoCommit=>1});
-    my $table="dbixarray";
   
-   #$dba->dbh->do("DROP TABLE $table");
+    #$dba->dbh->do("DROP TABLE $table");
     $dba->dbh->do("CREATE TABLE $table (F1 INTEGER,F2 CHAR(1),F3 VARCHAR(10))");
-    is($dba->insert($sabs->insert($table, {F1=>0,F2=>1,F3=>2})), 1, 'insert');
-    is($dba->insert($sabs->insert($table, {F1=>1,F2=>2,F3=>3})), 1, 'insert');
-    is($dba->insert($sabs->insert($table, {F1=>2,F2=>3,F3=>4})), 1, 'insert');
-    isa_ok($dba->sqlcursor($sabs->select($table)), 'DBI::st', 'sqlcursor');
-    
-    my $array=$dba->sqlarray($sabs->select($table, [qw{F1 F2 F3}], {F1=>0}));
+    is($dba->sqlinsert("INSERT INTO $table (F1,F2,F3) VALUES (?,?,?)", 0,1,2), 1, 'sqlinsert');
+    is($dba->sqlinsert("INSERT INTO $table (F1,F2,F3) VALUES (?,?,?)", 1,2,3), 1, 'sqlinsert');
+    is($dba->insert("INSERT INTO $table (F1,F2,F3) VALUES (?,?,?)", 2,3,4), 1, 'insert'); #old name
+  }
+
+  SKIP: {
+    skip $reason, 1 if $no_driver;
+    isa_ok($dba->sqlcursor("SELECT * FROM $table"), 'DBI::st', 'sqlcursor');
+  }
+
+  SKIP: {
+    skip $reason, 5 if $no_driver;
+    my $array=$dba->sqlarray("SELECT F1,F2,F3 FROM $table WHERE F1 = ?", 0);
     isa_ok($array, "ARRAY", '$dba->sqlarray scalar context');
     is(scalar(@$array), 3, 'scalar(@$array)');
     is($array->[0], 0, '$dba->sqlarray->[0]');
     is($array->[1], 1, '$dba->sqlarray->[1]');
     is($array->[2], 2, '$dba->sqlarray->[2]');
+  }
 
-    my @array=$dba->sqlarray($sabs->select($table, [qw{F1 F2 F3}], {F1=>0}));
+  SKIP: {
+    skip $reason, 4 if $no_driver;
+    my @array=$dba->sqlarray("SELECT F1,F2,F3 FROM $table WHERE F1 = ?", 0);
     is(scalar(@array), 3, 'scalar(@$array)');
     is($array[0], 0, '$dba->sqlarray[0]');
     is($array[1], 1, '$dba->sqlarray[1]');
     is($array[2], 2, '$dba->sqlarray[2]');
-    
-    my $hash=$dba->sqlhash($sabs->select($table, [qw{F1 F2}]));
+  }
+
+  SKIP: {
+    skip "The driver $driver does not support named parameters", 4 if ($no_driver or $driver eq "DBD::CSV");
+    my @array=$dba->sqlarray("SELECT F1,F2,F3 FROM $table WHERE F1 = :zero", {zero=>0});
+    is(scalar(@array), 3, 'named bind scalar(@$array)');
+    is($array[0], 0, 'named bind $dba->sqlarray[0]');
+    is($array[1], 1, 'named bind $dba->sqlarray[1]');
+    is($array[2], 2, 'named bind $dba->sqlarray[2]');
+  }
+
+  SKIP: {
+    skip $reason, 4 if $no_driver;
+    my $hash=$dba->sqlhash("SELECT F1,F2 FROM $table");
     isa_ok($hash, "HASH", 'sqlarray scalar context');
     is($hash->{'0'}, 1, 'sqlhash');
     is($hash->{'1'}, 2, 'sqlhash');
     is($hash->{'2'}, 3, 'sqlhash');
-    
-    my %hash=$dba->sqlhash($sabs->select($table, [qw{F1 F2}]));
+  }
+
+  SKIP: {
+    skip $reason, 3 if $no_driver;
+    my %hash=$dba->sqlhash("SELECT F1,F2 FROM $table");
     is($hash{'0'}, 1, 'sqlhash');
     is($hash{'1'}, 2, 'sqlhash');
     is($hash{'2'}, 3, 'sqlhash');
-    
-    $array=$dba->sqlarrayarray($sabs->select($table, [qw{F1 F2 F3}], {}, [qw{F1}]));
+  }
+
+  SKIP: {
+    skip $reason, 13 if $no_driver;
+    my $array=$dba->sqlarrayarray("SELECT F1,F2,F3 FROM $table ORDER BY F1");
     isa_ok($array, "ARRAY", 'sqlarrayarray scalar context');
     isa_ok($array->[0], "ARRAY", 'sqlarrayarray row 1');
     isa_ok($array->[1], "ARRAY", 'sqlarrayarray row 2');
@@ -69,8 +101,11 @@ SKIP: {
     is($array->[2]->[0], 2, 'data');
     is($array->[2]->[1], 3, 'data');
     is($array->[2]->[2], 4, 'data');
-    
-    @array=$dba->sqlarrayarray($sabs->select($table, [qw{F1 F2 F3}], {}, [qw{F1}]));
+  }
+
+  SKIP: {
+    skip $reason, 12 if $no_driver;
+    my @array=$dba->sqlarrayarray("SELECT F1,F2,F3 FROM $table ORDER BY F1");
     isa_ok($array[0], "ARRAY", 'sqlarrayarray row 1');
     isa_ok($array[1], "ARRAY", 'sqlarrayarray row 2');
     isa_ok($array[2], "ARRAY", 'sqlarrayarray row 3');
@@ -83,8 +118,11 @@ SKIP: {
     is($array[2]->[0], 2, 'data');
     is($array[2]->[1], 3, 'data');
     is($array[2]->[2], 4, 'data');
+  }
     
-    $array=$dba->sqlarrayarrayname($sabs->select($table, [qw{F1 F2 F3}], {}, [qw{F1}]));
+  SKIP: {
+    skip $reason, 17 if $no_driver;
+    my $array=$dba->sqlarrayarrayname("SELECT F1,F2,F3 FROM $table ORDER BY F1");
     isa_ok($array, "ARRAY", 'sqlarrayarrayname scalar context');
     isa_ok($array->[0], "ARRAY", 'sqlarrayarrayname header');
     isa_ok($array->[1], "ARRAY", 'sqlarrayarrayname row 1');
@@ -102,8 +140,11 @@ SKIP: {
     is($array->[3]->[0], 2, 'data');
     is($array->[3]->[1], 3, 'data');
     is($array->[3]->[2], 4, 'data');
+  }
     
-    @array=$dba->sqlarrayarrayname($sabs->select($table, [qw{F1 F2 F3}], {}, [qw{F1}]));
+  SKIP: {
+    skip $reason, 16 if $no_driver;
+    my @array=$dba->sqlarrayarrayname("SELECT F1,F2,F3 FROM $table ORDER BY F1");
     isa_ok($array[0], "ARRAY", 'sqlarrayarrayname header');
     isa_ok($array[1], "ARRAY", 'sqlarrayarrayname row 1');
     isa_ok($array[2], "ARRAY", 'sqlarrayarrayname row 2');
@@ -120,8 +161,46 @@ SKIP: {
     is($array[3]->[0], 2, 'data');
     is($array[3]->[1], 3, 'data');
     is($array[3]->[2], 4, 'data');
+  }
     
-    $array=$dba->sqlarrayhashname($sabs->select($table, [qw{F1 F2 F3}], {}, [qw{F1}]));
+  SKIP: {
+    skip $reason, 13 if $no_driver;
+    my $array=$dba->sqlarrayhash("SELECT F1,F2,F3 FROM $table ORDER BY F1");
+    isa_ok($array, "ARRAY", 'sqlarrayhashname scalar context');
+    isa_ok($array->[0], "HASH", 'sqlarrayhash row 1');
+    isa_ok($array->[1], "HASH", 'sqlarrayhash row 2');
+    isa_ok($array->[2], "HASH", 'sqlarrayhash row 3');
+    is($array->[0]->{'F1'}, 0, 'data');
+    is($array->[0]->{'F2'}, 1, 'data');
+    is($array->[0]->{'F3'}, 2, 'data');
+    is($array->[1]->{'F1'}, 1, 'data');
+    is($array->[1]->{'F2'}, 2, 'data');
+    is($array->[1]->{'F3'}, 3, 'data');
+    is($array->[2]->{'F1'}, 2, 'data');
+    is($array->[2]->{'F2'}, 3, 'data');
+    is($array->[2]->{'F3'}, 4, 'data');
+  }
+
+  SKIP: {
+    skip $reason, 12 if $no_driver;
+    my @array=$dba->sqlarrayhash("SELECT F1,F2,F3 FROM $table ORDER BY F1");
+    isa_ok($array[0], "HASH", 'sqlarrayhash row 1');
+    isa_ok($array[1], "HASH", 'sqlarrayhash row 2');
+    isa_ok($array[2], "HASH", 'sqlarrayhash row 3');
+    is($array[0]->{'F1'}, 0, 'data');
+    is($array[0]->{'F2'}, 1, 'data');
+    is($array[0]->{'F3'}, 2, 'data');
+    is($array[1]->{'F1'}, 1, 'data');
+    is($array[1]->{'F2'}, 2, 'data');
+    is($array[1]->{'F3'}, 3, 'data');
+    is($array[2]->{'F1'}, 2, 'data');
+    is($array[2]->{'F2'}, 3, 'data');
+    is($array[2]->{'F3'}, 4, 'data');
+  }
+
+  SKIP: {
+    skip $reason, 17 if $no_driver;
+    my $array=$dba->sqlarrayhashname("SELECT F1,F2,F3 FROM $table ORDER BY F1");
     isa_ok($array, "ARRAY", 'sqlarrayhashname scalar context');
     isa_ok($array->[0], "ARRAY", 'sqlarrayhashname header');
     isa_ok($array->[1], "HASH", 'sqlarrayhashname row 1');
@@ -139,8 +218,11 @@ SKIP: {
     is($array->[3]->{'F1'}, 2, 'data');
     is($array->[3]->{'F2'}, 3, 'data');
     is($array->[3]->{'F3'}, 4, 'data');
+  }
     
-    @array=$dba->sqlarrayhashname($sabs->select($table, [qw{F1 F2 F3}], {}, [qw{F1}]));
+  SKIP: {
+    skip $reason, 16 if $no_driver;
+    my @array=$dba->sqlarrayhashname("SELECT F1,F2,F3 FROM $table ORDER BY F1");
     isa_ok($array[0], "ARRAY", 'sqlarrayhashname header');
     isa_ok($array[1], "HASH", 'sqlarrayhashname row 1');
     isa_ok($array[2], "HASH", 'sqlarrayhashname row 2');
@@ -157,14 +239,14 @@ SKIP: {
     is($array[3]->{'F1'}, 2, 'data');
     is($array[3]->{'F2'}, 3, 'data');
     is($array[3]->{'F3'}, 4, 'data');
+  }
     
-    is($dba->update($sabs->update($table, {F2=>8,F3=>9}, {F1=>1})),1,'update');
-    $array=$dba->sqlarray($sabs->select($table, [qw{F1 F2 F3}], {F1=>1}));
-    isa_ok($array, "ARRAY", '$dba->sqlarray scalar context');
-    is(scalar(@$array), 3, 'scalar(@$array)');
-    is($array->[0], 1, '$dba->sqlarray->[0]');
-    is($array->[1], 8, '$dba->sqlarray->[1]');
-    is($array->[2], 9, '$dba->sqlarray->[2]');
+  SKIP: {
+    skip $reason, 2 if $no_driver;
+    my $sql="SELECT F1,F2,F3 FROM $table";
+    is($dba->sqlsort($sql,1), "$sql ORDER BY 1 ASC", 'sqlsort');
+    is($dba->sqlsort($sql,-1), "$sql ORDER BY 1 DESC", 'sqlsort');
     
     $dba->dbh->do("DROP TABLE $table");
+  }
 }

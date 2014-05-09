@@ -2,12 +2,75 @@ Revision history for Perl module DBIx-Array
 
 TODO:
   - Add "int" namespace as wrapper around SQL::Interp::sql_interp_strict
-  - Add "abs" namespace as wrapper around SQL::Abstract especially for insert/update/delete
-  - Add "sql" namespace for current insert/update/delete
-  - Add sqlinsertlist method as $sth->execute_array({ArrayTupleFetch => sub { return shift @array_of_row_references}});
-    - Note: DBD::Oracle may already support "ArrayTuple" instead of just ArrayTupleFetch
-    - We may also want to use the bind_param_array and execute_array methods
+  - Do we need to $dbh->quote_identifier($column) in bulkinsert methods?
 
+0.47 2014-05-06
+  - Added Export method csvappend_cursor
+
+0.46 2014-05-06
+  - Updated documentation
+
+0.45 2014-05-05
+  - Updated string constants to use single quotes
+
+0.44 2014-04-22
+  - Added bulk insert and update methods with "sql" prefixes.
+
+0.43 2014-04-21
+  - Renamed bulk insert and update methods with "abs" prefixes.
+
+0.42 2014-04-21
+  - Added bulkupdatearrayarray method and tests
+
+0.41 2014-04-20
+  - Deleted DESTROY method which closed database handles passed in.
+
+0.40 2014-04-19
+  - Added bulkinsertcursor($table, $sth);
+  
+0.39 2014-04-19
+  - Added tests for sqlarrayhash in t/002_sql_functions.t
+  - Added tests for absarrayhash in t/002_abs_functions.t
+
+0.38 2014-04-18
+  - Added prepare method as caching overlay.
+
+0.37 2014-04-18
+  - Added bulk insert methods
+
+0.36 2014-04-15
+  - Added sqlarrayobject and absarrayobject methods
+
+0.35 2014-04-15
+  - Added "abs" namespace wrappers around SQL::Abstract for "sql" select methods
+  
+0.34 2014-04-12
+  - Added SQL::Abstract interface for insert, update and delete
+
+0.33 2014-04-11
+  - Rolled back to our _prepare cache as DBI->prepare_cached does not integrate as well
+  - Added better logging on failures
+  - Updated documentation
+
+0.32 2013-08-05
+  - Removed our _prepare cache as DBI->prepare_cached is now available in DBI 1.40
+  - Added Package::New is base object
+
+0.31 2013-07-31
+  - Tweaked DBIx::Array->{action} tie a bit to try to remove warning from some scripts.
+
+0.30 2013-07-18
+  - Added "sql" namespace for current insert/update/delete
+
+0.29 2013-07-17
+  - Fixed local $dba->{"action"} to handle disconnect before the tied variable goes out of scope
+
+0.28 2013-07-01
+  - Removed caching from $dbx->{"action"} scalar tie
+
+0.27 2013-06-29
+  - Added action scalar tied to the database
+ 
 0.26 2013-06-18
   - Fixed tests to pass SKIP blocks
 

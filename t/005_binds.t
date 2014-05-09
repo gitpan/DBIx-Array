@@ -30,9 +30,9 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
 
    #$dba->dbh->do("DROP TABLE $table");
     $dba->dbh->do("CREATE TABLE $table (F1 INTEGER,F2 CHAR(1),F3 VARCHAR(10))");
-    is($dba->update("INSERT INTO $table (F1,F2,F3) VALUES (?,?,?)", 0,1,2), 1, 'insert');
-    is($dba->update("INSERT INTO $table (F1,F2,F3) VALUES (?,?,?)", 1,2,3), 1, 'insert');
-    is($dba->update("INSERT INTO $table (F1,F2,F3) VALUES (?,?,?)", 2,3,4), 1, 'insert');
+    is($dba->sqlinsert("INSERT INTO $table (F1,F2,F3) VALUES (?,?,?)", 0,1,2), 1, 'insert');
+    is($dba->sqlinsert("INSERT INTO $table (F1,F2,F3) VALUES (?,?,?)", 1,2,3), 1, 'insert');
+    is($dba->insert("INSERT INTO $table (F1,F2,F3) VALUES (?,?,?)", 2,3,4), 1, 'insert');
 
     is($dba->sqlscalar("SELECT F1 FROM $table WHERE F3 = ?",        4 ), "2", 'Array Bind');
     is($dba->sqlscalar("SELECT F1 FROM $table WHERE F3 = ?",   (    4)), "2", 'Array Bind');

@@ -3,7 +3,7 @@ use base qw{DBIx::Array};
 use strict;
 use warnings;
 
-our $VERSION='0.23';
+our $VERSION='0.47';
 our $PACKAGE=__PACKAGE__;
 
 =head1 NAME
@@ -82,14 +82,7 @@ Returns CSV given an arrayarrayname data structure
 sub csv_arrayarrayname {
   my $self=shift;
   my $data=shift;
-  my $module="Text::CSV_XS";
-  eval("use $module;");
-  if ($@) {
-    die("Error: $PACKAGE->csv_arrayarrayname method requres $module");
-  } else {
-    my $csv=Text::CSV_XS->new;
-    return join "", map {&_join_csv($csv, @$_)} @$data;
-  }
+  return join "", map {&_join_csv($self->_csv, @$_)} @$data;
 
   sub _join_csv {
     my $csv=shift;
@@ -100,7 +93,7 @@ sub csv_arrayarrayname {
 
 =head2 csv_cursor
 
-Writes CSV to file handle given an executed cursor
+Writes CSV to file handle given an executed cursor (with header row from $sth)
 
   binmode($fh);
   $dbx->csv_cursor($fh, $sth);
@@ -113,21 +106,40 @@ sub csv_cursor {
   my $self=shift;
   my $fh=shift;
   my $sth=shift;
-  my $module="Text::CSV_XS";
-  eval("use $module;");
-  if ($@) {
-    die("Error: $PACKAGE->csv_arrayarrayname method requres $module");
-  } else {
-    my $csv=Text::CSV_XS->new;
-    $csv->print($fh, scalar($sth->{'NAME'}));
+  $self->_csv->print($fh, scalar($sth->{'NAME'}));
+  print $fh "\r\n";
+  $self->csvappend_cursor($fh, $sth);
+}
+
+=head2 csvappend_cursor
+
+Appends CSV to file handle given an executed cursor (no header row)
+
+  binmode($fh);
+  $dbx->csvappend_cursor($fh, $sth);
+
+=cut
+
+sub csvappend_cursor {
+  my $self=shift;
+  my $fh=shift;
+  my $sth=shift;
+  my $row=[];
+  local $|=0;
+  while ($row=$sth->fetchrow_arrayref()) {
+    $self->_csv->print($fh, $row);
     print $fh "\r\n";
-    my $row=[];
-    while ($row=$sth->fetchrow_arrayref()) {
-      $csv->print($fh, $row);
-      print $fh "\r\n";
-    }
-    $sth->finish;
   }
+  $sth->finish;
+}
+
+sub _csv {
+  my $self=shift;
+  $self->{"_csv"}=shift if @_;
+  eval("use Text::CSV_XS;");
+  die("Error: CSV Export Methods requre Text::CSV_XS") if $@;
+  $self->{"_csv"}=Text::CSV_XS->new unless defined $self->{"_csv"};
+  return $self->{"_csv"};
 }
 
 =head2 xls_arrayarrayname
