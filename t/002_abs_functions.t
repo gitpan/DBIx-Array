@@ -22,8 +22,14 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   diag("Found database driver $driver") unless $no_driver;
   my $reason="Database driver $driver not installed";
 
+  eval "use SQL::Abstract";
+  my $no_abs=$@;
+  $reason="SQL::Abstract not found." if $no_abs;
+
+  my $skip=$no_driver || $no_abs;
+
   SKIP: {
-    skip $reason, 3 if $no_driver;
+    skip $reason, 3 if $skip;
   
     die("connection not defined for $driver") unless $connection->{$driver};
     $dba->connect($connection->{$driver}, "", "", {RaiseError=>0, AutoCommit=>1});
@@ -36,12 +42,12 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 1 if $no_driver;
+    skip $reason, 1 if $skip;
     isa_ok($dba->abscursor($table => "*"), 'DBI::st', 'abscursor');
   }
 
   SKIP: {
-    skip $reason, 5 if $no_driver;
+    skip $reason, 5 if $skip;
     my $array=$dba->absarray($table, [qw{F1 F2 F3}], {F1=>0});
     isa_ok($array, "ARRAY", '$dba->absarray scalar context');
     is(scalar(@$array), 3, 'scalar(@$array)');
@@ -51,7 +57,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 4 if $no_driver;
+    skip $reason, 4 if $skip;
     my @array=$dba->absarray($table, [qw{F1 F2 F3}], {F1=>0});
     is(scalar(@array), 3, 'scalar(@$array)');
     is($array[0], 0, '$dba->absarray[0]');
@@ -60,7 +66,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 4 if $no_driver;
+    skip $reason, 4 if $skip;
     my $hash=$dba->abshash($table, [qw{F1 F2}]);
     isa_ok($hash, "HASH", 'absarray scalar context');
     is($hash->{'0'}, 1, 'abshash');
@@ -69,7 +75,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 3 if $no_driver;
+    skip $reason, 3 if $skip;
     my %hash=$dba->abshash($table, [qw{F1 F2}]);
     is($hash{'0'}, 1, 'abshash');
     is($hash{'1'}, 2, 'abshash');
@@ -77,7 +83,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 13 if $no_driver;
+    skip $reason, 13 if $skip;
     my $array=$dba->absarrayarray($table, [qw{F1 F2 F3}], {}, [qw{F1}]);
     isa_ok($array, "ARRAY", 'absarrayarray scalar context');
     isa_ok($array->[0], "ARRAY", 'absarrayarray row 1');
@@ -95,7 +101,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 12 if $no_driver;
+    skip $reason, 12 if $skip;
     my @array=$dba->absarrayarray($table, [qw{F1 F2 F3}], {}, [qw{F1}]);
     isa_ok($array[0], "ARRAY", 'absarrayarray row 1');
     isa_ok($array[1], "ARRAY", 'absarrayarray row 2');
@@ -112,7 +118,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
     
   SKIP: {
-    skip $reason, 17 if $no_driver;
+    skip $reason, 17 if $skip;
     my $array=$dba->absarrayarrayname($table, [qw{F1 F2 F3}], {}, [qw{F1}]);
     isa_ok($array, "ARRAY", 'absarrayarrayname scalar context');
     isa_ok($array->[0], "ARRAY", 'absarrayarrayname header');
@@ -134,7 +140,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
     
   SKIP: {
-    skip $reason, 16 if $no_driver;
+    skip $reason, 16 if $skip;
     my @array=$dba->absarrayarrayname($table, [qw{F1 F2 F3}], {}, [qw{F1}]);
     isa_ok($array[0], "ARRAY", 'absarrayarrayname header');
     isa_ok($array[1], "ARRAY", 'absarrayarrayname row 1');
@@ -155,7 +161,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 13 if $no_driver;
+    skip $reason, 13 if $skip;
     my $array=$dba->absarrayhash($table, [qw{F1 F2 F3}], {}, [qw{F1}]);
     isa_ok($array, "ARRAY", 'absarrayhash scalar context');
     isa_ok($array->[0], "HASH", 'absarrayhash row 1');
@@ -173,7 +179,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 12 if $no_driver;
+    skip $reason, 12 if $skip;
     my @array=$dba->absarrayhash($table, [qw{F1 F2 F3}], {}, [qw{F1}]);
     isa_ok($array[0], "HASH", 'absarrayhash row 1');
     isa_ok($array[1], "HASH", 'absarrayhash row 2');
@@ -190,7 +196,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
     
   SKIP: {
-    skip $reason, 17 if $no_driver;
+    skip $reason, 17 if $skip;
     my $array=$dba->absarrayhashname($table, [qw{F1 F2 F3}], {}, [qw{F1}]);
     isa_ok($array, "ARRAY", 'absarrayhashname scalar context');
     isa_ok($array->[0], "ARRAY", 'absarrayhashname header');
@@ -212,7 +218,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
     
   SKIP: {
-    skip $reason, 16 if $no_driver;
+    skip $reason, 16 if $skip;
     my @array=$dba->absarrayhashname($table, [qw{F1 F2 F3}], {}, [qw{F1}]);
     isa_ok($array[0], "ARRAY", 'absarrayhashname header');
     isa_ok($array[1], "HASH", 'absarrayhashname row 1');
@@ -233,7 +239,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
     
   SKIP: {
-    skip $reason, 0 if $no_driver;
+    skip $reason, 0 if $skip;
     $dba->dbh->do("DROP TABLE $table");
   }
 }

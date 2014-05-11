@@ -1,5 +1,5 @@
 Name:           perl-DBIx-Array
-Version:        0.47
+Version:        0.48
 Release:        1%{?dist}
 Summary:        This module is a wrapper around DBI with array interfaces
 License:        BSD

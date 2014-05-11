@@ -4,6 +4,9 @@ TODO:
   - Add "int" namespace as wrapper around SQL::Interp::sql_interp_strict
   - Do we need to $dbh->quote_identifier($column) in bulkinsert methods?
 
+0.48 2014-05-11
+  - Updated tests to pass when SQL::Abstract is not installed
+
 0.47 2014-05-06
   - Added Export method csvappend_cursor
 

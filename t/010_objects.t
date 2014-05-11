@@ -32,6 +32,9 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   diag("Found database driver $driver") unless $no_driver;
   my $reason="Database driver $driver not installed";
 
+  eval "use SQL::Abstract";
+  my $no_abs=$@;
+
   SKIP: {
     skip $reason, 3 if $no_driver;
 
@@ -40,13 +43,15 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
 
     #$dba->dbh->do("DROP TABLE $table");
     $dba->dbh->do("CREATE TABLE $table (ID INTEGER,TYPE CHAR(1),NAME VARCHAR(10))");
-    is($dba->absinsert($table, {ID=>0, TYPE=>"a", NAME=>"foo"}), 1, 'absinsert');
-    is($dba->absinsert($table, {ID=>1, TYPE=>"b", NAME=>"bar"}), 1, 'absinsert');
-    is($dba->absinsert($table, {ID=>2, TYPE=>"c", NAME=>"baz"}), 1, 'absinsert');
+
+    is($dba->sqlinsert("INSERT INTO $table (ID,TYPE,NAME) VALUES (?,?,?)", qw{0 a foo}), 1, 'sqlinsert');
+    is($dba->sqlinsert("INSERT INTO $table (ID,TYPE,NAME) VALUES (?,?,?)", qw{1 b bar}), 1, 'sqlinsert');
+    is($dba->sqlinsert("INSERT INTO $table (ID,TYPE,NAME) VALUES (?,?,?)", qw{2 c baz}), 1, 'sqlinsert');
   }
 
   SKIP: {
-    skip $reason, 22 if $no_driver;
+    $reason="SQL::Abstract not found." if $no_abs;
+    skip $reason, 22 if $no_driver || $no_abs;
     my $array=$dba->absarrayobject("My::Package", $table, [qw{ID TYPE NAME}], {}, [qw{ID}]);
     isa_ok($array, "ARRAY", 'absarrayhashname scalar context');
     isa_ok($array->[0], "My::Package", 'absarrayobject row 0');
@@ -76,10 +81,10 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   SKIP: {
     skip $reason, 22 if $no_driver;
     my $array=$dba->sqlarrayobject("My::Package", qq{SELECT ID, TYPE, NAME from $table ORDER BY ID});
-    isa_ok($array, "ARRAY", 'absarrayhashname scalar context');
-    isa_ok($array->[0], "My::Package", 'absarrayobject row 0');
-    isa_ok($array->[1], "My::Package", 'absarrayobject row 1');
-    isa_ok($array->[2], "My::Package", 'absarrayobject row 2');
+    isa_ok($array, "ARRAY", 'sqlarrayhashname scalar context');
+    isa_ok($array->[0], "My::Package", 'sqlarrayobject row 0');
+    isa_ok($array->[1], "My::Package", 'sqlarrayobject row 1');
+    isa_ok($array->[2], "My::Package", 'sqlarrayobject row 2');
     diag(Dumper $array);
     is($array->[0]->{'ID'}, 0, 'data');
     is($array->[0]->{'TYPE'}, "a", 'data');
@@ -102,7 +107,8 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 7 if $no_driver;
+    $reason="SQL::Abstract not found." if $no_abs;
+    skip $reason, 7 if $no_driver || $no_abs;
     my ($object)=$dba->absarrayobject("My::Package", $table, [qw{ID TYPE NAME}], {ID=>0});
     isa_ok($object, "My::Package", 'absarrayobject');
     diag(Dumper $object);

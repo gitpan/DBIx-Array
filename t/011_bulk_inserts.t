@@ -22,8 +22,14 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   diag("Found database driver $driver") unless $no_driver;
   my $reason="Database driver $driver not installed";
 
+  eval "use SQL::Abstract";
+  my $no_abs=$@;
+  $reason="SQL::Abstract not found." if $no_abs;
+
+  my $skip=$no_driver || $no_abs;
+
   SKIP: {
-    skip $reason, 1 if $no_driver;
+    skip $reason, 1 if $skip;
   
     die("connection not defined for $driver") unless $connection->{$driver};
     $dba->connect($connection->{$driver}, "", "", {RaiseError=>0, AutoCommit=>1});
@@ -34,7 +40,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 13 if $no_driver;
+    skip $reason, 13 if $skip;
     my $array=$dba->absarrayhash($table, [qw{F1 F2 F3}], {}, [qw{F1}]);
     isa_ok($array, "ARRAY", 'absarrayhash scalar context');
     isa_ok($array->[0], "HASH", 'absarrayhash row 1');
@@ -52,19 +58,19 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 1 if $no_driver;
+    skip $reason, 1 if $skip;
 
     is($dba->absdelete($table), 3, 'absdelete');
   }
 
   SKIP: {
-    skip $reason, 1 if $no_driver;
+    skip $reason, 1 if $skip;
 
     is($dba->bulkabsinsertarrayhash($table, [qw{F1 F2 F3}], [{F1=>0,F2=>1,F3=>2}, {F1=>1,F2=>2,F3=>3}, {F1=>2,F2=>3,F3=>4}]), 3, 'bulkabsinsertarrayarray');
   }
 
   SKIP: {
-    skip $reason, 13 if $no_driver;
+    skip $reason, 13 if $skip;
     my $array=$dba->absarrayhash($table, [qw{F1 F2 F3}], {}, [qw{F1}]);
     isa_ok($array, "ARRAY", 'absarrayhash scalar context');
     isa_ok($array->[0], "HASH", 'absarrayhash row 1');
@@ -82,7 +88,7 @@ foreach my $driver ("DBD::CSV", "DBD::XBase") {
   }
 
   SKIP: {
-    skip $reason, 0 if $no_driver;
+    skip $reason, 0 if $skip;
     $dba->dbh->do("DROP TABLE $table");
   }
 }
