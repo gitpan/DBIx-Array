@@ -7,7 +7,7 @@ use List::Util qw(sum);
 use DBI;
 use DBIx::Array::Session::Action;
 
-our $VERSION='0.48';
+our $VERSION='0.49';
 our $PACKAGE=__PACKAGE__;
 
 =head1 NAME
@@ -910,8 +910,8 @@ sub bulksqlupdatearrayarray {
   my @tuple_status = ();
   my $noerror      = $sth->execute_for_fetch( sub {shift @$arrayarray}, \@tuple_status);
   warn("Warning: Atempted $size updates but only $noerror where successful.") unless $size == $noerror;
-  my $count        = sum grep {$_ > 0} @tuple_status;
-  return $count // 0;
+  my $count        = sum(0, grep {$_ > 0} @tuple_status);
+  return $count;
 }
 
 =head1 METHODS (Write) - Bulk - SQL::Abstract-like
